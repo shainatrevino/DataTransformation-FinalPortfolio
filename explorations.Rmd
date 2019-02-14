@@ -1,0 +1,15 @@
+---
+title: "Preliminary Explorations"
+author: "Shaina Trevino"
+date: "February 13, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+# install.packages("nhanesA")
+# install.packages("naniar")
+library(nhanesA)
+theme_set(theme_minimal())
+```

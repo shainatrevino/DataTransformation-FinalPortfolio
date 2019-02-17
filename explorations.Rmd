@@ -70,21 +70,130 @@ su_15 <- nhanes('DUQ_I')
 ```{r join_data}
 # participant id is unique across the years
 
+# joining demographic data
 join <- full_join(demo_05, demo_07)
 join1 <- full_join(join, demo_09)
 join2 <- full_join(join1, demo_11)
 join3 <- full_join(join2, demo_13)
 demo <- full_join(join3, demo_15)
-
 # checking if id is unique
-demo %>% count(SEQN) %>% filter(n>1)
+demo %>% count(SEQN) %>% filter(n > 1)
+
+# joining SU data
+sj <- full_join(su_05, su_07)
+sj1 <- full_join(sj, su_09)
+sj2 <- full_join(sj1, su_11)
+sj3 <- full_join(sj2, su_13)
+su <-full_join(sj3, su_15)
+# checking if id is unique
+su %>% count(SEQN) %>% filter(n > 1)
+
+# joining demo with su
+d <- left_join(su, demo)
 ```
 
 
 ```{r export_data}
 # Example of exporting data into csv files
 write.csv(demo, "demo.csv")
+write.csv(su, "su.csv")
+
+```
+
+```{r tidy}
+# changing codes to years
+td <- d %>% 
+  janitor::clean_names() %>% 
+  mutate(year = case_when(sddsrvyr == 4 ~ 2005,
+                          sddsrvyr == 5 ~ 2007,
+                          sddsrvyr == 6 ~ 2009,
+                          sddsrvyr == 7 ~ 2011,
+                          sddsrvyr == 8 ~ 2013,
+                          sddsrvyr == 9 ~ 2015,
+                          TRUE ~ NA_real_))
+
+# creating labels for categorical variables
+td <- td %>% 
+  mutate(ethnicity = case_when(ridreth3 == 1 ~ "Hispanic", # combined to be more succinct
+                               ridreth3 == 2 ~ "Hispanic", 
+                               ridreth3 == 3 ~ "White",
+                               ridreth3 == 4 ~ "Black",
+                               ridreth3 == 6 ~ "Asian",
+                               ridreth3 == 7 ~ "Other/Multiracial",
+                               TRUE ~ NA_character_)) 
+
+td <- td %>% 
+  mutate(income = case_when(indhhin2 == 1 ~ "$0 - $4,999",
+                            indhhin2 == 2 ~ "$5,000 to $9,999",
+                            indhhin2 == 3 ~ "10,000 to $14,999",
+                            indhhin2 == 4 ~ "$15,000 to $19,999",
+                            indhhin2 == 5 ~ "$20,000 to $24,999",
+                            indhhin2 == 6 ~ "$25,000 to $34,999",
+                            indhhin2 == 7 ~ "$35,000 to $44,999",
+                            indhhin2 == 8 ~ "$45,000 to $54,999",
+                            indhhin2 == 9 ~ "$55,000 to $64,999",
+                            indhhin2 == 10 ~ "$65,000 to $74,999",
+                            indhhin2 == 11 ~ "$75,000 and Over",
+                            indhhin2 == 12 ~ "Over $20,000",
+                            indhhin2 == 13 ~ "Under $20,000",
+                            indhhin2 == 14 ~ "$75,000 to $99,999",
+                            indhhin2 == 15 ~ "$100,000 and over",
+                            indhhin2 == 77 ~ "Refused",
+                            indhhin2 == 99 ~ "Don't know",
+                            TRUE ~ NA_character_))
+
+# Coding SU variables
+td <- td %>% 
+  mutate(marijuana = case_when(duq200 == 1 ~ "Yes",
+                               duq200 == 2 ~ "No",
+                               TRUE ~ NA_character_)) %>% 
+  mutate(cocaine = case_when(duq250 == 1 ~ "Yes",
+                             duq250 == 2 ~ "No",
+                             TRUE ~ NA_character_)) %>% 
+  mutate(heroin = case_when(duq290 == 1 ~ "Yes",
+                            duq290 == 2 ~ "No",
+                            TRUE ~ NA_character_)) %>% 
+  mutate(meth = case_when(duq330 == 1 ~ "Yes",
+                          duq330 == 2 ~ "No",
+                          TRUE ~ NA_character_))
+```
 
 
+```{r initial_plot}
+h_count <- td %>% 
+  group_by(year) %>% 
+  count(heroin) %>% 
+  filter(heroin == "Yes")
+
+c_count <- td %>% 
+  group_by(year) %>% 
+  count(cocaine) %>% 
+  filter(cocaine == "Yes")
+
+me_count <- td %>% 
+  group_by(year) %>% 
+  count(meth) %>% 
+  filter(meth == "Yes")
+
+ma_count <- td %>% 
+  group_by(year) %>% 
+  count(marijuana) %>% 
+  filter(marijuana == "Yes")
+
+cj <- right_join(h_count, c_count, by = "year")
+cj1 <- right_join(cj, me_count, by = "year")
+su_count1 <- right_join(cj1, ma_count, by = "year")
+
+su_count <- su_count1 %>% 
+  ungroup() %>% 
+  rename(Heroin = n.x,
+         Cocaine = n.y,
+         Meth = n.x.x,
+         Marijuana = n.y.y) %>% 
+  select(year, Heroin, Cocaine, Meth, Marijuana) %>% 
+  gather(drug, n, Heroin:Marijuana) 
+
+ggplot(su_count, aes(year, n)) + 
+  geom_line(aes(color = drug))
 ```
 

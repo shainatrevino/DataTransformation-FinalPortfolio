@@ -11,5 +11,80 @@ library(tidyverse)
 # install.packages("nhanesA")
 # install.packages("naniar")
 library(nhanesA)
+library(here)
+library(rio)
 theme_set(theme_minimal())
 ```
+## Tidying Data 
+
+import data
+join files
+write to csv
+
+```{r import_data}
+
+#Before 2005, they used different drug use surveys
+
+# DEMOGRAPHICS
+# demographics from 2005-2006 (release cycle 4)
+demo_05 <- nhanes('DEMO_D')
+
+# demographics from 2007-2008 (release cycle 5)
+demo_07 <- nhanes('DEMO_E')
+
+# demographics from 2009-2010 (release cycle 6)
+demo_09 <- nhanes('DEMO_F')
+
+# demographics from 2011-2012 (release cycle 7)
+demo_11 <- nhanes('DEMO_G')
+
+# demographics from 2013-2014 (release cycle 8)
+demo_13 <- nhanes('DEMO_H')
+
+# demographics from 2015-2016 (release cycle 9)
+demo_15 <- nhanes('DEMO_I')
+
+# SUBSTANCE USE
+# SU from 2005-2006 (release cycle 4)
+su_05 <- nhanes('DUQ_D')
+
+# SU from 2007-2008 (release cycle 5)
+su_07 <- nhanes('DUQ_E')
+
+# SU from 2009-2010 (release cycle 6)
+su_09 <- nhanes('DUQ_F')
+
+# SU from 2011-2012 (release cycle 7)
+su_11 <- nhanes('DUQ_G')
+
+# SU from 2013-2014 (release cycle 8)
+su_13 <- nhanes('DUQ_H')
+
+# SU from 2015-2016 (release cycle 9)
+su_15 <- nhanes('DUQ_I')
+
+# 
+
+```
+
+```{r join_data}
+# participant id is unique across the years
+
+join <- full_join(demo_05, demo_07)
+join1 <- full_join(join, demo_09)
+join2 <- full_join(join1, demo_11)
+join3 <- full_join(join2, demo_13)
+demo <- full_join(join3, demo_15)
+
+# checking if id is unique
+demo %>% count(SEQN) %>% filter(n>1)
+```
+
+
+```{r export_data}
+# Example of exporting data into csv files
+write.csv(demo, "demo.csv")
+
+
+```
+

@@ -197,3 +197,14 @@ ggplot(su_count, aes(year, n)) +
   geom_line(aes(color = drug))
 ```
 
+Need to:
+* fct_reorder drug levels so that colors match order presented
+* Identify dips and rises in trends and search for reasons why (policy, etc)
+* change count to percent?
+* make year a data variable
+* make lines thicker, choose prettier color
+* modify theme elements and place labels to reduce cognitive load
+* Since lines are so far apart, place label at end of trend line and delete the legend (will have to expand y limits)
+* Place points for the years in there is data for (and then make line dotted?)
+
+NEXT - explore differences related to race/ethnicity and gender (consider same plot for different audiences)

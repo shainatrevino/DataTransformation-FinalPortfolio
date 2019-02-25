@@ -194,24 +194,28 @@ t_demo <- t_demo %>%
 d <- left_join(su, t_demo, by = "seqn")
 ```
 
+### Initial Plot 1
+
+Goal: Show the trend in substance use from 2005 to 2015 by different substances and explore gender and racial differences
+Variables: Substance use is the count of the number of people who reported use in that year
 
 ```{r initial_plot1}
-h_count <- td %>% 
+h_count <- d %>% 
   group_by(year) %>% 
   count(heroin) %>% 
   filter(heroin == "Yes")
 
-c_count <- td %>% 
+c_count <- d %>% 
   group_by(year) %>% 
   count(cocaine) %>% 
   filter(cocaine == "Yes")
 
-me_count <- td %>% 
+me_count <- d %>% 
   group_by(year) %>% 
   count(meth) %>% 
   filter(meth == "Yes")
 
-ma_count <- td %>% 
+ma_count <- d %>% 
   group_by(year) %>% 
   count(marijuana) %>% 
   filter(marijuana == "Yes")
@@ -234,27 +238,49 @@ ggplot(su_count, aes(year, n)) +
 ```
 
 Need to:
+* take out marijuana (want to visualize illicit drugs)
 * fct_reorder drug levels so that colors match order presented
 * Identify dips and rises in trends and search for reasons why (policy, etc)
 * change count to percent?
 * make year a data variable
-* make lines thicker, choose prettier color
+* make lines thicker, change color pallete
 * modify theme elements and place labels to reduce cognitive load
 * Since lines are so far apart, place label at end of trend line and delete the legend (will have to expand y limits)
 * Place points for the years in there is data for (and then make line dotted?) and put label for high/low point years
-* change color pallete 
-* try facet by sex or gender or income (2levels)
+* try facet by sex or ethnicity
 * Nov 2012 recreational marijuana legalized
 * Obama ends war on drugs in 2009
-
 NEXT - explore differences related to race/ethnicity and gender (consider same plot for different audiences)
 
+```{r revised_plot1_data}
+rpd <- d %>% 
+  filter(heroin == "Yes" |
+         cocaine == "Yes" |
+         meth == "Yes" |
+         marijuana == "Yes") %>% 
+  select(heroin, cocaine, meth, marijuana, year, sex, ethnicity) %>% 
+  rename(Heroin = heroin,
+         Cocaine = cocaine,
+         Meth = meth,
+         Marijuana = marijuana) %>% 
+  gather(drug, response, Heroin:Marijuana) %>% 
+  filter(response == "Yes") %>% 
+  group_by(year, drug, sex) %>% 
+  count() %>% 
+  filter(drug != "Marijuana")
 
+ggplot(rpd, aes(year, n)) + 
+  geom_line(aes(color = drug), size = 1.1) +
+  facet_wrap(~ sex)
+```
+
+
+### Initial Plot 2
+
+Goal: Show the change in distribution of how many days a person used different addictive benzodiazepines from year 2001 to 2015
+Variables: days of use is continuous and types of benzodiazepines and year is categorical
 
 ```{r plot2_data}
-
-  
-
 pud1 <- pu %>% 
   janitor::clean_names() %>% 
   filter(rxddrug == "LORAZEPAM" |
@@ -276,37 +302,29 @@ pud <- left_join(pud1, to_join, by = "seqn") %>%
   
 ```
 
+
 ```{r initial_plot2}
 ggplot(pud, aes(drug, days)) +
-  geom_jitter(color = factor(year))
+  geom_jitter(aes(color = year))
 ```
 
-```{r}
-pud11 <- pu_01 %>% 
-  janitor::clean_names() %>% 
-  filter(rxd240b == "LORAZEPAM" |
-         rxd240b == "ALPRAZOLAM" |
-         rxd240b == "TRIAZOLAM" | #ONLY 1 CASE IN 15
-         rxd240b == "CHLORDIAZEPOXIDE" | # DONT INCLUDE
-         rxd240b == "DIAZEPAM" |
-         rxd240b == "CLONAZEPAM") %>% 
-  select(seqn, rxd240b, rxd260, rxd295) %>% 
-  rename(drug = rxd240b,
-         days = rxd260, 
-         count = rxd295)
+To refine:
+* change to ridgeline density to clearly see them since so much overlap
+* facet by drug type and put year on y axis, so it is easier to see differences between the years over the drug types
+* add variability? maybe with jitter
+* change drug names to generic names?
+* change days to years (limit x axis to 0 on ggridges)
 
-to_join <- td %>% 
-  rename(age = ridageyr) %>% 
-  select(seqn, age, sex) 
-
-pud111 <- left_join(pud11, to_join, by = "seqn") %>% 
-  naniar::replace_with_na(replace = list(days = 99999))
-
-ggplot(pud111, aes(drug, days)) +
-  geom_jitter()
+```{r refined_plot2}
+ggplot(pud, aes(days, drug)) +
+  ggridges::geom_density_ridges(alpha = .6) +
+  facet_wrap(~ year)
 ```
 
+### Initial Plot 3
 
+Goal: Show how age of first substance use differs by income for each substance type
+Variables: age of first substance use is categorical, income and substance types are categorical
 
 ```{r initial_plot 3}
 pd <- td %>% 
@@ -326,6 +344,7 @@ ggplot(pd, aes(income, age_use)) +
   
 ```
 
+For Revision:
 * dodge bars
 * create one average value to plot instead of distribution
 * condense income levels

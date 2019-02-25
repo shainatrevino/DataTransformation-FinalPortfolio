@@ -13,6 +13,7 @@ library(tidyverse)
 library(nhanesA)
 library(here)
 library(rio)
+library(colorblindr)
 theme_set(theme_minimal())
 ```
 ## Tidying Data 
@@ -240,17 +241,28 @@ ggplot(su_count, aes(year, n)) +
 Need to:
 * take out marijuana (want to visualize illicit drugs)
 * fct_reorder drug levels so that colors match order presented
-* Identify dips and rises in trends and search for reasons why (policy, etc)
-* change count to percent?
-* make year a data variable
+  * annotate labels instead of legend - Since lines are so far apart, place label at end of trend line and delete the legend (will have to expand y limits)
+* Change count to percent
+  * increased cognitive load - small increases and harder to understand proportion
+* edit x axis to show years more clearly
 * make lines thicker, change color pallete
-* modify theme elements and place labels to reduce cognitive load
-* Since lines are so far apart, place label at end of trend line and delete the legend (will have to expand y limits)
 * Place points for the years in there is data for (and then make line dotted?) and put label for high/low point years
 * try facet by sex or ethnicity
+  * stack vertically on top of each other (wont work with annotated labels)
+  * change aspect ratio
+* modify theme elements and place labels to reduce cognitive load
+  * only major gridlines with data shown
+  * Bigger facet titles
+  * Adding labels
+    * get rid of x axis since it is clear it is year
+  * add space between y label and axis
+  * center title
+  * lighten axis text and caption
+* Identify dips and rises in trends and search for reasons why (policy, etc)
 * Nov 2012 recreational marijuana legalized
 * Obama ends war on drugs in 2009
-NEXT - explore differences related to race/ethnicity and gender (consider same plot for different audiences)
+
+* FIGURE OUT HOW TO PLACE ANNOTATES AT DIFFERENT POINTS ON FACETS AND GET WHITE BACKGROUND BEHIND ANNOTATE TEXT.
 
 ```{r revised_plot1_data}
 rpd <- d %>% 
@@ -267,11 +279,42 @@ rpd <- d %>%
   filter(response == "Yes") %>% 
   group_by(year, drug, sex) %>% 
   count() %>% 
-  filter(drug != "Marijuana")
+  filter(drug != "Marijuana") %>% 
+  ungroup() %>% 
+  mutate(prop = (n/sum(n)))
 
-ggplot(rpd, aes(year, n)) + 
-  geom_line(aes(color = drug), size = 1.1) +
-  facet_wrap(~ sex)
+ggplot(rpd, aes(year, n, color = drug)) + 
+  geom_line(size = 1.1, alpha = .7) +
+  geom_point(size = 2.5) +
+  facet_wrap(~ sex) +
+  geom_text(data = filter(rpd, year == 2015),
+            aes(y = n, label = drug),
+            hjust = .4,
+            vjust = -1.25,
+            fontface = "bold") +
+  geom_vline(xintercept = 2009.25, color = "#9e8d71", linetype = "dotted", size = .6) +
+  geom_vline(xintercept = 2012.8, color = "#9e8d71", linetype = "dotted", size = .6) +
+  annotate("text", label = "End of\n'War on Drugs'", x = 2009.25, y = 525, color = "#9e8d71", size = 3) +
+  annotate("text", label = "Marijuana 1st\nLeagalized", x = 2012.8, y = 525, color = "#9e8d71", size = 3) +
+  scale_x_continuous(limits = c(2005, 2016),
+                     breaks = c(2005, 2007, 2009, 2011, 2013, 2015),
+                     labels = c(2005, "'07", "'09", "'11", "'13", 2015)) +
+  theme_minimal() +
+  theme(legend.position = "none",
+        panel.grid.minor.x = element_blank(),
+        panel.grid.major = element_line(color = "#e2dfd7"),
+        panel.grid.minor = element_line(color = "#e2dfd7"),
+        axis.title.x = element_blank(),
+        panel.background = element_rect(fill = "#f9f6ef", color = "#f9f6ef"), 
+        plot.background = element_rect(fill = "#f9f6ef", color = "#f9f6ef"),
+        strip.text = element_text(color = "black", face = "bold", size = 12),
+        plot.title = element_text(size = 14, hjust = .25),
+        plot.caption = element_text(color = "gray50", size = 7),
+        axis.text = element_text(color = "gray50")) +
+  labs(y = "People reporting substance use\n",
+       title = "Substance use trend from 2005 to 2015 in the U.S.",
+       caption = "Data from the CDC's National Health and Nutrition Examination Survey")
+  scale_color_OkabeIto() 
 ```
 
 

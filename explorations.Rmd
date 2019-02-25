@@ -26,85 +26,112 @@ write to csv
 #Before 2005, they used different drug use surveys
 
 # DEMOGRAPHICS
+#demo_01 <- nhanes('DEMO_B')
 # demographics from 2005-2006 (release cycle 4)
-demo_05 <- nhanes('DEMO_D')
+#demo_05 <- nhanes('DEMO_D')
 
 # demographics from 2007-2008 (release cycle 5)
-demo_07 <- nhanes('DEMO_E')
+#demo_07 <- nhanes('DEMO_E')
 
 # demographics from 2009-2010 (release cycle 6)
-demo_09 <- nhanes('DEMO_F')
+#demo_09 <- nhanes('DEMO_F')
 
 # demographics from 2011-2012 (release cycle 7)
-demo_11 <- nhanes('DEMO_G')
+#demo_11 <- nhanes('DEMO_G')
 
 # demographics from 2013-2014 (release cycle 8)
-demo_13 <- nhanes('DEMO_H')
+#demo_13 <- nhanes('DEMO_H')
 
 # demographics from 2015-2016 (release cycle 9)
-demo_15 <- nhanes('DEMO_I')
+#demo_15 <- nhanes('DEMO_I')
 
 # SUBSTANCE USE
 # SU from 2005-2006 (release cycle 4)
-su_05 <- nhanes('DUQ_D')
+#su_05 <- nhanes('DUQ_D')
 
 # SU from 2007-2008 (release cycle 5)
-su_07 <- nhanes('DUQ_E')
+#su_07 <- nhanes('DUQ_E')
 
 # SU from 2009-2010 (release cycle 6)
-su_09 <- nhanes('DUQ_F')
+#su_09 <- nhanes('DUQ_F')
 
 # SU from 2011-2012 (release cycle 7)
-su_11 <- nhanes('DUQ_G')
+#su_11 <- nhanes('DUQ_G')
 
 # SU from 2013-2014 (release cycle 8)
-su_13 <- nhanes('DUQ_H')
+#su_13 <- nhanes('DUQ_H')
 
 # SU from 2015-2016 (release cycle 9)
-su_15 <- nhanes('DUQ_I')
+#su_15 <- nhanes('DUQ_I')
 
-# 
+# Prescription usage from 15-16 and 01-02
+#pu_15 <- nhanes('RXQ_RX_I')
+#pu_01 <- nhanes('RXQ_RX_B')
+
 
 ```
 
 ```{r join_data}
 # participant id is unique across the years
 
-# joining demographic data
-join <- full_join(demo_05, demo_07)
-join1 <- full_join(join, demo_09)
-join2 <- full_join(join1, demo_11)
-join3 <- full_join(join2, demo_13)
-demo <- full_join(join3, demo_15)
-# checking if id is unique
-demo %>% count(SEQN) %>% filter(n > 1)
+## joining demographic data
+#join <- full_join(demo_05, demo_07)
+#join1 <- full_join(join, demo_09)
+#join2 <- full_join(join1, demo_11)
+#join3 <- full_join(join2, demo_13)
+#join4 <- full_join(join3, demo_15)
+#demo <- full_join(join4, demo_01)
 
-# joining SU data
-sj <- full_join(su_05, su_07)
-sj1 <- full_join(sj, su_09)
-sj2 <- full_join(sj1, su_11)
-sj3 <- full_join(sj2, su_13)
-su <-full_join(sj3, su_15)
 # checking if id is unique
-su %>% count(SEQN) %>% filter(n > 1)
+#demo %>% count(SEQN) %>% filter(n > 1)
 
-# joining demo with su
-d <- left_join(su, demo)
+# # joining SU data
+# sj <- full_join(su_05, su_07)
+# sj1 <- full_join(sj, su_09)
+# sj2 <- full_join(sj1, su_11)
+# sj3 <- full_join(sj2, su_13)
+# su <-full_join(sj3, su_15)
+
+# checking if id is unique
+# su %>% count(SEQN) %>% filter(n > 1)
+
+# joining PU data
+#puj <- pu_01 %>% 
+ # rename(RXDDRUG = RXD240B,
+       #  RXDDAYS = RXD260, 
+       #  RXDCOUNT = RXD295)
+  
+#pu <- full_join(pu_15, puj)
 ```
 
 
 ```{r export_data}
 # Example of exporting data into csv files
-write.csv(demo, "demo.csv")
-write.csv(su, "su.csv")
+#write.csv(demo, "demo.csv")
+#write.csv(su, "su.csv")
+#write.csv(pu, "pu.csv")
 
 ```
 
+```{r import_data}
+demo <- import(here("data", "demo.csv"),
+               setclass = "tbl_df")
+
+su <- import(here("data", "su.csv"),
+             setclass = "tbl_df")
+
+pu <- import(here("data", "pu.csv"),
+             setclass = "tbl_df")
+```
+
+
 ```{r tidy}
 # changing codes to years
-td <- d %>% 
+t_demo <- demo %>% 
   janitor::clean_names() %>% 
-  mutate(year = case_when(sddsrvyr == 4 ~ 2005,
+  mutate(year = case_when(sddsrvyr == 2 ~ 2001,
+                          sddsrvyr == 3 ~ 2003,
+                          sddsrvyr == 4 ~ 2005,
                           sddsrvyr == 5 ~ 2007,
                           sddsrvyr == 6 ~ 2009,
                           sddsrvyr == 7 ~ 2011,
@@ -113,7 +140,7 @@ td <- d %>%
                           TRUE ~ NA_real_))
 
 # creating labels for categorical variables
-td <- td %>% 
+t_demo <- t_demo %>% 
   mutate(ethnicity = case_when(ridreth3 == 1 ~ "Hispanic", # combined to be more succinct
                                ridreth3 == 2 ~ "Hispanic", 
                                ridreth3 == 3 ~ "White",
@@ -122,7 +149,7 @@ td <- td %>%
                                ridreth3 == 7 ~ "Other/Multiracial",
                                TRUE ~ NA_character_)) 
 
-td <- td %>% 
+t_demo <- t_demo %>% 
   mutate(income = case_when(indhhin2 == 1 ~ "$0 - $4,999",
                             indhhin2 == 2 ~ "$5,000 to $9,999",
                             indhhin2 == 3 ~ "10,000 to $14,999",
@@ -143,7 +170,8 @@ td <- td %>%
                             TRUE ~ NA_character_))
 
 # Coding SU variables
-td <- td %>% 
+su <- su %>% 
+  janitor::clean_names() %>% 
   mutate(marijuana = case_when(duq200 == 1 ~ "Yes",
                                duq200 == 2 ~ "No",
                                TRUE ~ NA_character_)) %>% 
@@ -156,10 +184,18 @@ td <- td %>%
   mutate(meth = case_when(duq330 == 1 ~ "Yes",
                           duq330 == 2 ~ "No",
                           TRUE ~ NA_character_))
+
+# Coding sex variable
+t_demo <- t_demo %>% 
+   mutate(sex = case_when(riagendr == 1 ~ "Male", 
+                         riagendr == 2 ~ "Female", 
+                         TRUE ~ NA_character_)) 
+# joining demo with su
+d <- left_join(su, t_demo, by = "seqn")
 ```
 
 
-```{r initial_plot}
+```{r initial_plot1}
 h_count <- td %>% 
   group_by(year) %>% 
   count(heroin) %>% 
@@ -205,6 +241,96 @@ Need to:
 * make lines thicker, choose prettier color
 * modify theme elements and place labels to reduce cognitive load
 * Since lines are so far apart, place label at end of trend line and delete the legend (will have to expand y limits)
-* Place points for the years in there is data for (and then make line dotted?)
+* Place points for the years in there is data for (and then make line dotted?) and put label for high/low point years
+* change color pallete 
+* try facet by sex or gender or income (2levels)
+* Nov 2012 recreational marijuana legalized
+* Obama ends war on drugs in 2009
 
 NEXT - explore differences related to race/ethnicity and gender (consider same plot for different audiences)
+
+
+
+```{r plot2_data}
+
+  
+
+pud1 <- pu %>% 
+  janitor::clean_names() %>% 
+  filter(rxddrug == "LORAZEPAM" |
+         rxddrug == "ALPRAZOLAM" |
+         rxddrug == "DIAZEPAM" |
+         rxddrug == "CLONAZEPAM") %>% 
+  select(seqn, rxddrug, rxddays, rxdcount) %>% 
+  rename(drug = rxddrug,
+         days = rxddays, 
+         count = rxdcount)
+
+to_join <- t_demo %>% 
+  rename(age = ridageyr) %>% 
+  select(seqn, year, age, sex) 
+
+pud <- left_join(pud1, to_join, by = "seqn") %>% 
+  naniar::replace_with_na(replace = list(days = 99999)) %>% 
+  mutate(year = factor(year))
+  
+```
+
+```{r initial_plot2}
+ggplot(pud, aes(drug, days)) +
+  geom_jitter(color = factor(year))
+```
+
+```{r}
+pud11 <- pu_01 %>% 
+  janitor::clean_names() %>% 
+  filter(rxd240b == "LORAZEPAM" |
+         rxd240b == "ALPRAZOLAM" |
+         rxd240b == "TRIAZOLAM" | #ONLY 1 CASE IN 15
+         rxd240b == "CHLORDIAZEPOXIDE" | # DONT INCLUDE
+         rxd240b == "DIAZEPAM" |
+         rxd240b == "CLONAZEPAM") %>% 
+  select(seqn, rxd240b, rxd260, rxd295) %>% 
+  rename(drug = rxd240b,
+         days = rxd260, 
+         count = rxd295)
+
+to_join <- td %>% 
+  rename(age = ridageyr) %>% 
+  select(seqn, age, sex) 
+
+pud111 <- left_join(pud11, to_join, by = "seqn") %>% 
+  naniar::replace_with_na(replace = list(days = 99999))
+
+ggplot(pud111, aes(drug, days)) +
+  geom_jitter()
+```
+
+
+
+```{r initial_plot 3}
+pd <- td %>% 
+  rename(age_Marijuana = duq210, 
+         age_Cocaine = duq260, 
+         age_Heroin = duq300, 
+         age_Meth = duq340) %>% 
+  filter(year != 2005) %>% 
+  select(age_Cocaine, age_Marijuana, age_Heroin, age_Meth, income, sex, ethnicity, sex) %>% 
+  gather(drug, age_use, age_Cocaine:age_Meth) %>% 
+  separate(drug, c(NA, "drug"), sep = "_") %>% 
+  drop_na(age_use)
+
+ggplot(pd, aes(income, age_use)) + 
+  geom_col(aes(fill = sex), stat = "identity") +
+  facet_wrap(~ drug)
+  
+```
+
+* dodge bars
+* create one average value to plot instead of distribution
+* condense income levels
+* have drug type on x axis and facet by income level (see crimes in denver hw2code)
+* change colors and theme layout
+* think of other type of graph (have point estimate with st. error since calculating average)
+* fct_reorder levels
+* take out marijana? illicit use

@@ -14,6 +14,7 @@ library(nhanesA)
 library(here)
 library(rio)
 library(colorblindr)
+library(ggridges)
 theme_set(theme_minimal())
 ```
 ## Tidying Data 
@@ -197,6 +198,7 @@ d <- left_join(su, t_demo, by = "seqn")
 
 ### Initial Plot 1
 
+General Audience
 Goal: Show the trend in substance use from 2005 to 2015 by different substances and explore gender and racial differences
 Variables: Substance use is the count of the number of people who reported use in that year
 
@@ -259,8 +261,9 @@ Need to:
   * center title
   * lighten axis text and caption
 * Identify dips and rises in trends and search for reasons why (policy, etc)
-* Nov 2012 recreational marijuana legalized
-* Obama ends war on drugs in 2009
+  * Nov 2012 recreational marijuana legalized
+  * Obama ends war on drugs in 2009
+* Find best aspect ratio
 
 * FIGURE OUT HOW TO PLACE ANNOTATES AT DIFFERENT POINTS ON FACETS AND GET WHITE BACKGROUND BEHIND ANNOTATE TEXT.
 
@@ -320,6 +323,7 @@ ggplot(rpd, aes(year, n, color = drug)) +
 
 ### Initial Plot 2
 
+Scientific Audience
 Goal: Show the change in distribution of how many days a person used different addictive benzodiazepines from year 2001 to 2015
 Variables: days of use is continuous and types of benzodiazepines and year is categorical
 
@@ -355,13 +359,47 @@ To refine:
 * change to ridgeline density to clearly see them since so much overlap
 * facet by drug type and put year on y axis, so it is easier to see differences between the years over the drug types
 * add variability? maybe with jitter
-* change drug names to generic names?
+* change drug names to generic names? 
+  * change case of drug categories
 * change days to years (limit x axis to 0 on ggridges)
+* change scale of ridges to to get less overlap - see jittered points better
+* professional color pallete
+* get rid of legend if adding color
+* limit data to those under 80
+* extend aspect ratio - wider for the years
+* add facet boxes
+* fct reorder density plots
+
+* HOW TO CHANGE COLOR OF POINTS VS LINE
 
 ```{r refined_plot2}
-ggplot(pud, aes(days, drug)) +
-  ggridges::geom_density_ridges(alpha = .6) +
-  facet_wrap(~ year)
+pud1 <- pud %>% 
+  mutate(use_yr = days/365) %>% 
+  filter(age != 80)
+
+ggplot(pud1, aes(use_yr, fct_reorder(drug, use_yr), fill = drug)) +
+  geom_density_ridges(aes(color = drug),
+                      scale = .95,
+                      alpha = .5, 
+                      jittered_points = TRUE, 
+                      position = position_points_jitter(width = .1, 
+                                                        height = 0), 
+                      point_shape = '|', 
+                      point_size = 2, 
+                      point_alpha = .4) +
+  facet_wrap(~ year) +
+  scale_y_discrete(breaks = c("LORAZEPAM", "CLONAZEPAM", "DIAZEPAM", "ALPRAZOLAM"),
+                   labels = c("Ativan", "Klonopin", "Valium", "Xanax")) + # or delete and change case str_to_title and use specific name?
+  scale_x_continuous(limits = c(0,40)) +
+  theme_minimal() +
+  theme(legend.position = "none",
+        axis.title.y = element_blank(),
+        strip.text = element_text(color = "gray30", face = "bold", size = 12)) +
+  labs(x = "Years using prescription",
+       title = "Common Addictive Benzodiazepine Prescription Use in U.S",
+       subtitle = "Comparing 2001 use to 2015 use") +
+  scale_fill_viridis_d() +
+  scale_color_viridis_d()
 ```
 
 ### Initial Plot 3

@@ -538,12 +538,12 @@ pd1 <- d %>%
                                     "$35,000 to $54,999",
                                     "55,000 to $99,999",
                                     "$100,000 and over"))) %>% 
-  filter(income != "$75,000 and Over" |
-         income != "Over $20,000") %>% 
   naniar::replace_with_na(replace = list(age_use = c(999, 777, 99, 0, 77))) %>% 
   drop_na(age_use)
           
 sum_pd1 <- pd1 %>% 
+  filter(income != "$75,000 and Over" |
+         income != "Over $20,000") %>% 
   group_by(drug, income) %>% 
   summarize(avg_age = mean(age_use),
             n = length(age_use),
@@ -557,9 +557,42 @@ ggplot(sum_pd1, aes(fct_reorder(drug, avg_age), avg_age)) +
 #can't really see differences - make jitter with point estimate and se bar
 #consider filtering for some years and taking out marijuana again
 
-ggplot(pd1, aes(fct_reorder(education, age_use), age_use)) + 
-  geom_jitter() +
-  facet_wrap(~ drug)
-
 ```
 
+2nd revise:
+
+* plot jittered raw distribution with point and uncertaintly over it
+* plot using only 2 years recent data for less overlap/confounds
+* add label for average age
+* could try stat density
+
+```{r}
+pd1_rev <- pd1 %>% 
+  filter(year == 2015 | 
+         year == 2013) %>% 
+  mutate(education = factor(education,
+                            levels = c("No diploma/GED",
+                                       "High school graduate/GED", 
+                                       "Some college",
+                                       "College graduate or above",
+                                       TRUE ~ NA_character_))) %>% 
+  drop_na(age_use, education)
+
+pd1_rev_sum <- pd1_rev %>%   
+  group_by(drug, education) %>% 
+  summarize(avg_age = mean(age_use),
+            n = length(age_use),
+            sd = sd(age_use),
+            se = sd / sqrt(n)) %>% 
+  drop_na(education)
+
+ggplot(pd1_rev_sum, aes(education, avg_age)) + 
+  geom_jitter(aes(x = education, y = age_use), data = pd1_rev, alpha = .06, width = .3, color = "cornflowerblue") +
+  geom_errorbar(aes(ymin = avg_age + qnorm(.025)*se,
+                    ymax = avg_age + qnorm(.975)*se),
+                width = .4) +
+  geom_point(size = 1) + # add jitter from other dataset (before point)
+  facet_wrap(~ drug) +
+  coord_flip() #coord flip to see labels better and differences in outcome
+```
+ 

@@ -17,11 +17,17 @@ library(colorblindr)
 library(ggridges)
 theme_set(theme_minimal())
 ```
+
 ## Tidying Data 
 
-import data
-join files
-write to csv
+First steps:
+* import data for all years
+* join files
+  * join data frames accross years
+  * join data frames accross types
+* write to csv and place in project for reproducability 
+* write code to import data
+* recode categorical variables with nhanes codebook
 
 ```{r import_data}
 
@@ -170,6 +176,14 @@ t_demo <- t_demo %>%
                             indhhin2 == 77 ~ "Refused",
                             indhhin2 == 99 ~ "Don't know",
                             TRUE ~ NA_character_))
+
+t_demo <- t_demo %>% 
+  mutate(education = case_when(dmdeduc2 == 1 ~ "No diploma/GED",
+                               dmdeduc2 == 2 ~ "No diploma/GED",
+                               dmdeduc2 == 3 ~ "High school graduate/GED",
+                               dmdeduc2 == 4 ~ "Some college",
+                               dmdeduc2 == 5 ~ "College graduate or above",
+                               TRUE ~ NA_character_))
 
 # Coding SU variables
 su <- su %>% 
@@ -357,11 +371,12 @@ ggplot(pud, aes(drug, days)) +
 
 To refine:
 * change to ridgeline density to clearly see them since so much overlap
-* facet by drug type and put year on y axis, so it is easier to see differences between the years over the drug types
 * add variability? maybe with jitter
-* change drug names to generic names? 
+  * added jittered points
+* change drug names to generic names for non-medical scientists 
   * change case of drug categories
-* change days to years (limit x axis to 0 on ggridges)
+* change days to years 
+  * (limit x axis to 0 on ggridges)
 * change scale of ridges to to get less overlap - see jittered points better
 * professional color pallete
 * get rid of legend if adding color
@@ -370,9 +385,15 @@ To refine:
 * add facet boxes
 * fct reorder density plots
 
+2ND Revision:
+* change color to white to not get rideline where there is no data (0 on x)
+* change facet to drug to see differences in years more clearly
+  * facet by drug type and put year on y axis, so it is easier to see differences between the years over the drug types
+* figure out how to change point color to black to see actual distribution of points
+
 * HOW TO CHANGE COLOR OF POINTS VS LINE
 
-```{r refined_plot2}
+```{r refined_plot2_NOTUSING}
 pud1 <- pud %>% 
   mutate(use_yr = days/365) %>% 
   filter(age != 80)
@@ -394,21 +415,65 @@ ggplot(pud1, aes(use_yr, fct_reorder(drug, use_yr), fill = drug)) +
   theme_minimal() +
   theme(legend.position = "none",
         axis.title.y = element_blank(),
-        strip.text = element_text(color = "gray30", face = "bold", size = 12)) +
-  labs(x = "Years using prescription",
-       title = "Common Addictive Benzodiazepine Prescription Use in U.S",
-       subtitle = "Comparing 2001 use to 2015 use") +
+        strip.text = element_text(color = "gray30", face = "bold", size = 12),
+        plot.caption = element_text(color = "gray50", size = 7)) +
+  labs(x = "Years of use",
+       title = "Distribution of Addictive Benzodiazepine Prescription Use",
+       subtitle = "Differences in 2001 vs 2015 use in the U.S.",
+       caption = "Data from the CDC's National Health and Nutrition Examination Survey") +
   scale_fill_viridis_d() +
   scale_color_viridis_d()
 ```
 
+```{r refined_plot2}
+pud1 <- pud %>% 
+  mutate(use_yr = days/365,
+         drug = case_when(drug == "LORAZEPAM" ~ "Ativan",
+                          drug == "CLONAZEPAM" ~ "Klonopin",
+                          drug == "DIAZEPAM" ~ "Valium",
+                          drug == "ALPRAZOLAM" ~ "Xanax",
+                          TRUE ~ NA_character_)) %>% 
+  filter(age != 80)
+
+ggplot(pud1, aes(use_yr, year, fill = drug)) +
+  geom_density_ridges(color = "white",
+                      scale = .9,
+                      alpha = .5, 
+                      jittered_points = TRUE, 
+                      position = position_points_jitter(width = .1, 
+                                                        height = 0), 
+                      point_shape = '|', 
+                      point_size = 2, 
+                      point_alpha = .35,
+                      point_color = "black") +
+  facet_wrap(~ drug) +
+  scale_x_continuous(limits = c(0,40)) +
+  theme_minimal() +
+  theme(legend.position = "none",
+        axis.title.y = element_blank(),
+        axis.text.y = element_text(face = "bold"),
+        axis.text.x = element_text(color = "gray50"),
+        strip.text = element_text(color = "gray30", face = "bold", size = 12),
+        plot.caption = element_text(color = "gray50", size = 7)) +
+  labs(x = "Years of use",
+       title = "Distribution of Addictive Benzodiazepine Prescription Use",
+       subtitle = "Differences in 2001 vs 2015 use in the U.S.",
+       caption = "Data from the CDC's National Health and Nutrition Examination Survey\n2001 Sample (n = 18,418) and 2015 Sample (n = 19,647)") +
+  scale_fill_viridis_d() +
+  scale_color_viridis_d()
+
+#aspect ratio preview not working
+```
+
+
 ### Initial Plot 3
 
+Audience: Scientific community
 Goal: Show how age of first substance use differs by income for each substance type
 Variables: age of first substance use is categorical, income and substance types are categorical
 
 ```{r initial_plot 3}
-pd <- td %>% 
+pd <- d %>% 
   rename(age_Marijuana = duq210, 
          age_Cocaine = duq260, 
          age_Heroin = duq300, 
@@ -434,3 +499,67 @@ For Revision:
 * think of other type of graph (have point estimate with st. error since calculating average)
 * fct_reorder levels
 * take out marijana? illicit use
+* filter out and combine income levels
+* relevel income levels from lowest to highest
+* filter out age of use that are coded as missing or denied
+* calculate mean to plot instead of whatever is plotted above
+* make error bars for uncertainty
+  * calculate se for mean of age of use
+
+```{r revised_plot3}
+pd1 <- d %>% 
+  rename(age_Marijuana = duq210, 
+         age_Cocaine = duq260, 
+         age_Heroin = duq300, 
+         age_Meth = duq340) %>% 
+  filter(year != 2005) %>% 
+  select(age_Cocaine, age_Marijuana, age_Heroin, age_Meth, income, sex, year, ethnicity, education) %>% 
+  gather(drug, age_use, age_Cocaine:age_Meth) %>% 
+  separate(drug, c(NA, "drug"), sep = "_") %>% 
+  mutate(income = case_when(income == "$0 - $4,999" ~ "Under $20,000", #grouped by 10s instead of 5s
+                            income == "$5,000 to $9,999" ~ "Under $20,000",
+                            income == "10,000 to $14,999" ~ "Under $20,000",
+                            income == "$15,000 to $19,999" ~ "Under $20,000",
+                            income == "$20,000 to $24,999" ~ "$20,000 to $34,999",
+                            income == "$25,000 to $34,999" ~ "$20,000 to $34,999",
+                            income == "$35,000 to $44,999" ~ "$35,000 to $54,999",
+                            income == "$45,000 to $54,999" ~ "$35,000 to $54,999",
+                            income == "$55,000 to $64,999" ~ "$55,000 to $99,999",
+                            income ==  "$65,000 to $74,999" ~ "$55,000 to $99,999",
+                            income ==  "$75,000 and Over" ~ "$75,000 and Over",
+                            income ==  "Over $20,000" ~ "Over $20,000",
+                            income ==  "Under $20,000" ~ "Under $20,000",
+                            income ==  "$75,000 to $99,999" ~ "$55,000 to $99,999",
+                            income ==  "$100,000 and over" ~ "$100,000 and over",
+                            TRUE ~ NA_character_),
+         income = factor(income,
+                         levels = c("Under $20,000",
+                                    "$20,000 to $34,999", 
+                                    "$35,000 to $54,999",
+                                    "55,000 to $99,999",
+                                    "$100,000 and over"))) %>% 
+  filter(income != "$75,000 and Over" |
+         income != "Over $20,000") %>% 
+  naniar::replace_with_na(replace = list(age_use = c(999, 777, 99, 0, 77))) %>% 
+  drop_na(age_use)
+          
+sum_pd1 <- pd1 %>% 
+  group_by(drug, income) %>% 
+  summarize(avg_age = mean(age_use),
+            n = length(age_use),
+            sd = sd(age_use),
+            se = sd / sqrt(n))
+
+
+ggplot(sum_pd1, aes(fct_reorder(drug, avg_age), avg_age)) + 
+  geom_col() +
+  facet_wrap(~ income)
+#can't really see differences - make jitter with point estimate and se bar
+#consider filtering for some years and taking out marijuana again
+
+ggplot(pd1, aes(fct_reorder(education, age_use), age_use)) + 
+  geom_jitter() +
+  facet_wrap(~ drug)
+
+```
+

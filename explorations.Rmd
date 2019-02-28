@@ -7,14 +7,15 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(tidyverse)
-# install.packages("nhanesA")
 # install.packages("naniar")
+library(tidyverse)
 library(nhanesA)
 library(here)
 library(rio)
 library(colorblindr)
 library(ggridges)
+library(ggridges)
+library(ungeviz)
 theme_set(theme_minimal())
 ```
 
@@ -29,7 +30,9 @@ First steps:
 * write code to import data
 * recode categorical variables with nhanes codebook
 
-```{r import_data}
+```{r import_data_initial, include = FALSE}
+# PRELIMINARY DATA IMPORTING - No need to run anymore
+ # requires install.packages('nhanesA')
 
 #Before 2005, they used different drug use surveys
 
@@ -79,7 +82,7 @@ First steps:
 
 ```
 
-```{r join_data}
+```{r join_data, include = FALSE}
 # participant id is unique across the years
 
 ## joining demographic data
@@ -113,7 +116,7 @@ First steps:
 ```
 
 
-```{r export_data}
+```{r export_data, include = FALSE}
 # Example of exporting data into csv files
 #write.csv(demo, "demo.csv")
 #write.csv(su, "su.csv")
@@ -278,8 +281,13 @@ Need to:
   * Nov 2012 recreational marijuana legalized
   * Obama ends war on drugs in 2009
 * Find best aspect ratio
+* tidy data differently
+  * get one dataset without joining
+  * filter for data, gather, group_by, and count
 
 * FIGURE OUT HOW TO PLACE ANNOTATES AT DIFFERENT POINTS ON FACETS AND GET WHITE BACKGROUND BEHIND ANNOTATE TEXT.
+
+### Revised Plot 1
 
 ```{r revised_plot1_data}
 rpd <- d %>% 
@@ -299,7 +307,9 @@ rpd <- d %>%
   filter(drug != "Marijuana") %>% 
   ungroup() %>% 
   mutate(prop = (n/sum(n)))
+```
 
+```{r revised_plot1}
 ggplot(rpd, aes(year, n, color = drug)) + 
   geom_line(size = 1.1, alpha = .7) +
   geom_point(size = 2.5) +
@@ -316,7 +326,6 @@ ggplot(rpd, aes(year, n, color = drug)) +
   scale_x_continuous(limits = c(2005, 2016),
                      breaks = c(2005, 2007, 2009, 2011, 2013, 2015),
                      labels = c(2005, "'07", "'09", "'11", "'13", 2015)) +
-  theme_minimal() +
   theme(legend.position = "none",
         panel.grid.minor.x = element_blank(),
         panel.grid.major = element_line(color = "#e2dfd7"),
@@ -385,20 +394,12 @@ To refine:
 * add facet boxes
 * fct reorder density plots
 
-2ND Revision:
-* change color to white to not get rideline where there is no data (0 on x)
-* change facet to drug to see differences in years more clearly
-  * facet by drug type and put year on y axis, so it is easier to see differences between the years over the drug types
-* figure out how to change point color to black to see actual distribution of points
-
-* HOW TO CHANGE COLOR OF POINTS VS LINE
-
 ```{r refined_plot2_NOTUSING}
-pud1 <- pud %>% 
+rpud <- pud %>% 
   mutate(use_yr = days/365) %>% 
   filter(age != 80)
 
-ggplot(pud1, aes(use_yr, fct_reorder(drug, use_yr), fill = drug)) +
+ggplot(rpud, aes(use_yr, fct_reorder(drug, use_yr), fill = drug)) +
   geom_density_ridges(aes(color = drug),
                       scale = .95,
                       alpha = .5, 
@@ -412,7 +413,6 @@ ggplot(pud1, aes(use_yr, fct_reorder(drug, use_yr), fill = drug)) +
   scale_y_discrete(breaks = c("LORAZEPAM", "CLONAZEPAM", "DIAZEPAM", "ALPRAZOLAM"),
                    labels = c("Ativan", "Klonopin", "Valium", "Xanax")) + # or delete and change case str_to_title and use specific name?
   scale_x_continuous(limits = c(0,40)) +
-  theme_minimal() +
   theme(legend.position = "none",
         axis.title.y = element_blank(),
         strip.text = element_text(color = "gray30", face = "bold", size = 12),
@@ -425,8 +425,14 @@ ggplot(pud1, aes(use_yr, fct_reorder(drug, use_yr), fill = drug)) +
   scale_color_viridis_d()
 ```
 
+2ND Revision:
+* change color to white to not get rideline where there is no data (0 on x)
+* change facet to drug to see differences in years more clearly
+  * facet by drug type and put year on y axis, so it is easier to see differences between the years over the drug types
+* figure out how to change point color to black to see actual distribution of points
+
 ```{r refined_plot2}
-pud1 <- pud %>% 
+rpud <- pud %>% 
   mutate(use_yr = days/365,
          drug = case_when(drug == "LORAZEPAM" ~ "Ativan",
                           drug == "CLONAZEPAM" ~ "Klonopin",
@@ -435,7 +441,7 @@ pud1 <- pud %>%
                           TRUE ~ NA_character_)) %>% 
   filter(age != 80)
 
-ggplot(pud1, aes(use_yr, year, fill = drug)) +
+ggplot(rpud, aes(use_yr, year, fill = drug)) +
   geom_density_ridges(color = "white",
                       scale = .9,
                       alpha = .5, 
@@ -448,7 +454,6 @@ ggplot(pud1, aes(use_yr, year, fill = drug)) +
                       point_color = "black") +
   facet_wrap(~ drug) +
   scale_x_continuous(limits = c(0,40)) +
-  theme_minimal() +
   theme(legend.position = "none",
         axis.title.y = element_blank(),
         axis.text.y = element_text(face = "bold"),
@@ -491,7 +496,7 @@ ggplot(pd, aes(income, age_use)) +
 ```
 
 For Revision:
-* dodge bars
+* take out sex since there are barely any differences
 * create one average value to plot instead of distribution
 * condense income levels
 * have drug type on x axis and facet by income level (see crimes in denver hw2code)
@@ -588,28 +593,6 @@ pd1_rev <- pd1 %>%
   drop_na(age_use, education)
 ```
 
-```{r ethnicity_diff_plot3}
-#barely any ethnicity differences
-pd_sum_eth <- pd1_rev %>% 
-  filter(year == 2015) %>% 
-  group_by(drug, education, ethnicity_group) %>% 
-  summarize(avg_age = mean(age_use),
-            n = length(age_use),
-            sd = sd(age_use),
-            se = sd / sqrt(n)) %>% 
-  drop_na(education, ethnicity_group)
-
-ggplot(pd_sum_eth, aes(education, avg_age)) +
-  geom_col(aes(fill = fct_reorder(ethnicity_group, avg_age)), position = "dodge") +
-  facet_wrap(~ fct_reorder(drug, avg_age), nrow = 1)
-
-ggplot(pd_sum_eth, aes(education, avg_age)) +
-  geom_col(aes(fill = fct_reorder(ethnicity_group, avg_age)), position = "dodge") +
-  facet_wrap(~ fct_reorder(drug, avg_age), ncol = 1) +
-  coord_flip()
-
-```
-
 
 ```{r revised_plot2}
 pd1_rev_filter <- pd1_rev %>% 
@@ -636,7 +619,6 @@ p <- ggplot(pd1_rev_sum, aes(education, avg_age)) +
   geom_point(size = 1) + # add jitter from other dataset (before point)
   facet_wrap(~ drug, ncol = 1) + # added ncol = 1 to see more of variability 
   coord_flip() + #coord flip to see labels better and differences in outcome
-  theme_minimal() +
   theme(legend.position = "none",
         plot.caption = element_text(color = "gray50", size = 7)) +
   labs(y = "Age of first use (in years)",
@@ -647,6 +629,8 @@ p <- ggplot(pd1_rev_sum, aes(education, avg_age)) +
 p
 ```
  
+* trying out darker theme
+
 ```{r dark_theme}
 p + theme(plot.background = element_rect(fill = "gray10"),
         axis.text = element_text(colour = "gray80"),
@@ -664,32 +648,59 @@ p + theme(plot.background = element_rect(fill = "gray10"),
 
 ```
  
+* For a general audience
  
 ```{r density}
-library(ggridges)
-library(ungeviz)
 ggplot(pd1_rev_sum, aes(avg_age, education)) + 
   stat_confidence_density(aes(moe = se),
                           fill = "cornflowerblue",
-                          height = .45,
-                          width = 1) +
-  xlim(0, 60) +
+                          height = .45) +
+  xlim(15, 35) +
   geom_point(alpha = .8, size = 1.25) +
   facet_wrap(~drug, ncol = 1) +
-  labs(title = "Does age of first substance use differ based on education status?",
-       x = "Average age of first use",
+  geom_text(aes(avg_age, education, label = round(avg_age, 1)),
+            nudge_x = 1.5,
+            nudge_y = .4,
+            size = 3,
+            color = "gray70") +
+  labs(title = "Differences in average age of first substance use based on education level",
+       x = "Average age of first use (in years)",
        y = "") +
   theme(plot.background = element_rect(fill = "gray10"),
         axis.text = element_text(colour = "gray80"),
         axis.title = element_text(colour = "gray80"),
-        plot.title = element_text(colour = "gray80"),
-        plot.caption = element_text(colour = "gray80", vjust = 1))
+        plot.title = element_text(colour = "gray80", hjust = 1.5),
+        plot.caption = element_text(colour = "gray80", vjust = 1),
+        panel.grid.major = element_line(colour = "gray30"), 
+        panel.grid.minor = element_line(colour = "gray30"),
+        strip.text = element_text(color = "gray80"))
 
 #limit x axis
-# add labels for average age
+# add labels for average age since limiting x axis
   
 ```
 
- 
+* exploring ethnicity differences - initial (most likley not using)
+
+```{r ethnicity_diff_plot3}
+pd_sum_eth <- pd1_rev %>% 
+  filter(year == 2015) %>% 
+  group_by(drug, education, ethnicity_group) %>% 
+  summarize(avg_age = mean(age_use),
+            n = length(age_use),
+            sd = sd(age_use),
+            se = sd / sqrt(n)) %>% 
+  drop_na(education, ethnicity_group)
+
+ggplot(pd_sum_eth, aes(education, avg_age)) +
+  geom_col(aes(fill = fct_reorder(ethnicity_group, avg_age)), position = "dodge") +
+  facet_wrap(~ fct_reorder(drug, avg_age), nrow = 1)
+
+ggplot(pd_sum_eth, aes(education, avg_age)) +
+  geom_col(aes(fill = fct_reorder(ethnicity_group, avg_age)), position = "dodge") +
+  facet_wrap(~ fct_reorder(drug, avg_age), ncol = 1) +
+  coord_flip()
+
+```
 
 

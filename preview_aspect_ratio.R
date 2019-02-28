@@ -4,3 +4,5 @@ ggpreview <- function (..., device = "png") {
   system2("open", fname)
   invisible(NULL)
 }
+
+ggpreview(width = 10, height = 6, units = "in")

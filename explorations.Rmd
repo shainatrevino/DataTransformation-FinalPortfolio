@@ -309,10 +309,10 @@ ggplot(rpd, aes(year, n, color = drug)) +
             hjust = .4,
             vjust = -1.25,
             fontface = "bold") +
-  geom_vline(xintercept = 2009.25, color = "#9e8d71", linetype = "dotted", size = .6) +
-  geom_vline(xintercept = 2012.8, color = "#9e8d71", linetype = "dotted", size = .6) +
-  annotate("text", label = "End of\n'War on Drugs'", x = 2009.25, y = 525, color = "#9e8d71", size = 3) +
-  annotate("text", label = "Marijuana 1st\nLeagalized", x = 2012.8, y = 525, color = "#9e8d71", size = 3) +
+  geom_vline(xintercept = 2009.25, color = "gray30", linetype = "dotted", size = .6) +
+  geom_vline(xintercept = 2012.8, color = "gray30", linetype = "dotted", size = .6) +
+  annotate("text", label = "End of\n'War on Drugs'", x = 2009.25, y = 525, color = "gray30", size = 3) +
+  annotate("text", label = "Marijuana 1st\nLeagalized", x = 2012.8, y = 525, color = "gray30", size = 3) +
   scale_x_continuous(limits = c(2005, 2016),
                      breaks = c(2005, 2007, 2009, 2011, 2013, 2015),
                      labels = c(2005, "'07", "'09", "'11", "'13", 2015)) +
@@ -485,7 +485,7 @@ pd <- d %>%
   drop_na(age_use)
 
 ggplot(pd, aes(income, age_use)) + 
-  geom_col(aes(fill = sex), stat = "identity") +
+  geom_col(aes(fill = sex), position = "dodge") + #barely any sex differences
   facet_wrap(~ drug)
   
 ```
@@ -566,33 +566,130 @@ ggplot(sum_pd1, aes(fct_reorder(drug, avg_age), avg_age)) +
 * add label for average age
 * could try stat density
 
-```{r}
+```{r revised_data_p3}
 pd1_rev <- pd1 %>% 
-  filter(year == 2015 | 
-         year == 2013) %>% 
   mutate(education = factor(education,
-                            levels = c("No diploma/GED",
-                                       "High school graduate/GED", 
-                                       "Some college",
-                                       "College graduate or above",
-                                       TRUE ~ NA_character_))) %>% 
+                            levels = c("College graduate or above",
+                                       "Some college", 
+                                       "High school graduate/GED",
+                                       "No diploma/GED",
+                                       TRUE ~ NA_character_)),
+         ethnicity_group = case_when(ethnicity == "Hispanic" ~ "Non- White", # combined to be more succinct
+                                     ethnicity == "Hispanic" ~ "Non- White", 
+                                     ethnicity == "White" ~ "White",
+                                     ethnicity == "Black" ~ "Non- White",
+                                     ethnicity == "Asian" ~ "Non- White",
+                                     TRUE ~ NA_character_),
+         drug = factor(drug,
+                       levels = c("Marijuana",
+                                  "Cocaine",
+                                  "Meth",
+                                  "Heroin"))) %>% 
   drop_na(age_use, education)
+```
 
-pd1_rev_sum <- pd1_rev %>%   
+```{r ethnicity_diff_plot3}
+#barely any ethnicity differences
+pd_sum_eth <- pd1_rev %>% 
+  filter(year == 2015) %>% 
+  group_by(drug, education, ethnicity_group) %>% 
+  summarize(avg_age = mean(age_use),
+            n = length(age_use),
+            sd = sd(age_use),
+            se = sd / sqrt(n)) %>% 
+  drop_na(education, ethnicity_group)
+
+ggplot(pd_sum_eth, aes(education, avg_age)) +
+  geom_col(aes(fill = fct_reorder(ethnicity_group, avg_age)), position = "dodge") +
+  facet_wrap(~ fct_reorder(drug, avg_age), nrow = 1)
+
+ggplot(pd_sum_eth, aes(education, avg_age)) +
+  geom_col(aes(fill = fct_reorder(ethnicity_group, avg_age)), position = "dodge") +
+  facet_wrap(~ fct_reorder(drug, avg_age), ncol = 1) +
+  coord_flip()
+
+```
+
+
+```{r revised_plot2}
+pd1_rev_filter <- pd1_rev %>% 
+  filter(year == 2015 | 
+         year == 2013 ) %>% 
+  filter(drug != "Marijuana")
+
+pd1_rev_sum <- pd1_rev %>%  
+  filter(year == 2015 |
+         year == 2013 ) %>% 
   group_by(drug, education) %>% 
   summarize(avg_age = mean(age_use),
             n = length(age_use),
             sd = sd(age_use),
             se = sd / sqrt(n)) %>% 
-  drop_na(education)
+  drop_na(education) %>% 
+  filter(drug != "Marijuana")
 
-ggplot(pd1_rev_sum, aes(education, avg_age)) + 
-  geom_jitter(aes(x = education, y = age_use), data = pd1_rev, alpha = .06, width = .3, color = "cornflowerblue") +
+p <- ggplot(pd1_rev_sum, aes(education, avg_age)) + 
+  geom_jitter(aes(x = education, y = age_use, color = education), data = pd1_rev_filter, alpha = .1, width = .25) +
   geom_errorbar(aes(ymin = avg_age + qnorm(.025)*se,
                     ymax = avg_age + qnorm(.975)*se),
                 width = .4) +
   geom_point(size = 1) + # add jitter from other dataset (before point)
-  facet_wrap(~ drug) +
-  coord_flip() #coord flip to see labels better and differences in outcome
+  facet_wrap(~ drug, ncol = 1) + # added ncol = 1 to see more of variability 
+  coord_flip() + #coord flip to see labels better and differences in outcome
+  theme_minimal() +
+  theme(legend.position = "none",
+        plot.caption = element_text(color = "gray50", size = 7)) +
+  labs(y = "Age of first use (in years)",
+       x = "",
+       title = "Age of First Substance Use by Education Level",
+       subtitle = "Distribution and point estimate for average age of first use",
+       caption = "Data from the CDC's National Health and Nutrition Examination Survey (2013-2015)")
+p
 ```
  
+```{r dark_theme}
+p + theme(plot.background = element_rect(fill = "gray10"),
+        axis.text = element_text(colour = "gray80"),
+        axis.title = element_text(colour = "gray80"),
+        plot.title = element_text(colour = "gray80"),
+        plot.subtitle = element_text(colour = "gray80"),
+        plot.caption = element_text(colour = "gray80", vjust = 1),
+        panel.grid.major = element_line(colour = "gray30"), 
+        panel.grid.minor = element_line(colour = "gray30")) +
+  geom_errorbar(aes(ymin = avg_age + qnorm(.025)*se,
+                    ymax = avg_age + qnorm(.975)*se),
+                width = .4,
+                color = "gray90") +
+  geom_point(size = 1, color = "gray90")
+
+```
+ 
+ 
+```{r density}
+library(ggridges)
+library(ungeviz)
+ggplot(pd1_rev_sum, aes(avg_age, education)) + 
+  stat_confidence_density(aes(moe = se),
+                          fill = "cornflowerblue",
+                          height = .45,
+                          width = 1) +
+  xlim(0, 60) +
+  geom_point(alpha = .8, size = 1.25) +
+  facet_wrap(~drug, ncol = 1) +
+  labs(title = "Does age of first substance use differ based on education status?",
+       x = "Average age of first use",
+       y = "") +
+  theme(plot.background = element_rect(fill = "gray10"),
+        axis.text = element_text(colour = "gray80"),
+        axis.title = element_text(colour = "gray80"),
+        plot.title = element_text(colour = "gray80"),
+        plot.caption = element_text(colour = "gray80", vjust = 1))
+
+#limit x axis
+# add labels for average age
+  
+```
+
+ 
+
+

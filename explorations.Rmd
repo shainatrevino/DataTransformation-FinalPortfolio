@@ -257,15 +257,15 @@ ggplot(su_count, aes(year, n)) +
   geom_line(aes(color = drug))
 ```
 
-Need to:
-* take out marijuana (want to visualize illicit drugs)
-* fct_reorder drug levels so that colors match order presented
+Changes to make for revision:
+* filter out marijuana to visualize illicit drugs per proposal
+  * fct_reorder drug levels so that colors match order presented
   * annotate labels instead of legend - Since lines are so far apart, place label at end of trend line and delete the legend (will have to expand y limits)
 * Change count to percent
   * increased cognitive load - small increases and harder to understand proportion
 * edit x axis to show years more clearly
 * make lines thicker, change color pallete
-* Place points for the years in there is data for (and then make line dotted?) and put label for high/low point years
+* Place points for the years in there is data for
 * try facet by sex or ethnicity
   * stack vertically on top of each other (wont work with annotated labels)
   * change aspect ratio
@@ -284,7 +284,6 @@ Need to:
 * tidy data differently
   * get one dataset without joining
   * filter for data, gather, group_by, and count
-
 * FIGURE OUT HOW TO PLACE ANNOTATES AT DIFFERENT POINTS ON FACETS AND GET WHITE BACKGROUND BEHIND ANNOTATE TEXT.
 
 ### Revised Plot 1
@@ -321,8 +320,8 @@ ggplot(rpd, aes(year, n, color = drug)) +
             fontface = "bold") +
   geom_vline(xintercept = 2009.25, color = "gray30", linetype = "dotted", size = .6) +
   geom_vline(xintercept = 2012.8, color = "gray30", linetype = "dotted", size = .6) +
-  annotate("text", label = "End of\n'War on Drugs'", x = 2009.25, y = 525, color = "gray30", size = 3) +
-  annotate("text", label = "Marijuana 1st\nLeagalized", x = 2012.8, y = 525, color = "gray30", size = 3) +
+  annotate("text", label = "End of\n'War on Drugs'", x = 2007.7, y = 525, color = "gray30", size = 3) +
+  annotate("text", label = "Marijuana 1st\nLeagalized", x = 2014.3, y = 525, color = "gray30", size = 3) + #nudging annotations for clarity
   scale_x_continuous(limits = c(2005, 2016),
                      breaks = c(2005, 2007, 2009, 2011, 2013, 2015),
                      labels = c(2005, "'07", "'09", "'11", "'13", 2015)) +
@@ -380,13 +379,13 @@ ggplot(pud, aes(drug, days)) +
 
 To refine:
 * change to ridgeline density to clearly see them since so much overlap
-* add variability? maybe with jitter
+* add variability with jitter
   * added jittered points
 * change drug names to generic names for non-medical scientists 
   * change case of drug categories
 * change days to years 
-  * (limit x axis to 0 on ggridges)
-* change scale of ridges to to get less overlap - see jittered points better
+  * limit x axis to 0 on ggridges (never less than 0 years)
+* change scale of ridges to to get less overlap and see jittered points better
 * professional color pallete
 * get rid of legend if adding color
 * limit data to those under 80

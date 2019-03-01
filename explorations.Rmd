@@ -255,6 +255,29 @@ su_count <- su_count1 %>%
 
 ggplot(su_count, aes(year, n)) + 
   geom_line(aes(color = drug))
+
+# Shaina I made some changes to improve the plot you created here. I really enjoyed the gathering to create the drug variable. I changed your x axis to make it where it doesn't have the decimal but changed the years because I thought it looked better at every two years. I also removed the legend and used the ggrepel (sorry if you need to download it) package to use names rather than the legend. I believe there might be a better way to show the names. I also changed the colors for something that might be better for color blindness. - JP
+
+library(viridis)
+
+ggplot(su_count, aes(year, n)) + 
+  geom_line(aes(color = drug), size = 1) +
+  scale_x_continuous(breaks = c(2005, 2007,
+                                2009, 2011, 
+                                2013, 2015),
+                     labels = c("2005", "2007",
+                                "2009", "2011",
+                                "2013", "2015")) +
+  scale_color_viridis_d() +
+  ggrepel::geom_text_repel(data = filter(su_count, year == 2015),
+                                         aes(label = drug)) +
+  labs(x = " ",
+       y = "Amount of Drug Users",
+       title = "Drug Users across Years",
+       caption = "Data from NHANES datasets") +
+  guides(color = "none")
+
+
 ```
 
 Changes to make for revision:
@@ -318,8 +341,8 @@ ggplot(rpd, aes(year, n, color = drug)) +
             hjust = .4,
             vjust = -1.25,
             fontface = "bold") +
-  geom_vline(xintercept = 2009.25, color = "gray30", linetype = "dotted", size = .6) +
-  geom_vline(xintercept = 2012.8, color = "gray30", linetype = "dotted", size = .6) +
+  geom_vline(xintercept = 2009.25, color = "black", linetype = "dotdash", size = .6) +
+  geom_vline(xintercept = 2012.8, color = "black", linetype = "dotdash", size = .6) +
   annotate("text", label = "End of\n'War on Drugs'", x = 2007.7, y = 525, color = "gray30", size = 3) +
   annotate("text", label = "Marijuana 1st\nLeagalized", x = 2014.3, y = 525, color = "gray30", size = 3) + #nudging annotations for clarity
   scale_x_continuous(limits = c(2005, 2016),
@@ -338,8 +361,11 @@ ggplot(rpd, aes(year, n, color = drug)) +
         axis.text = element_text(color = "gray50")) +
   labs(y = "People reporting substance use\n",
        title = "Substance use trend from 2005 to 2015 in the U.S.",
-       caption = "Data from the CDC's National Health and Nutrition Examination Survey")
+       caption = "Data from the CDC's National Health and Nutrition Examination Survey") +
   scale_color_OkabeIto() 
+
+?linetype
+# This revised plot is amazing. My only comment for a change on this plot would be to change the color from gray30 to black since the dotted line is a little difficult to see. I changed the color and made your dotted line a dotdash line so its a little easier to see. I also added the + after your labs to incorporate your OkabeIto color pallette. I think it is a little easier on the eyes after my small changes but this plot is very informative and will make me go back to my code and incorporate some of the changes in my own plots. - JP
 ```
 
 
@@ -440,6 +466,8 @@ rpud <- pud %>%
                           TRUE ~ NA_character_)) %>% 
   filter(age != 80)
 
+rpud$year <- fct_relevel(rpud$year, "2015", "2001")
+
 ggplot(rpud, aes(use_yr, year, fill = drug)) +
   geom_density_ridges(color = "white",
                       scale = .9,
@@ -467,6 +495,8 @@ ggplot(rpud, aes(use_yr, year, fill = drug)) +
   scale_color_viridis_d()
 
 #aspect ratio preview not working
+
+# The final plot shows so much more information in a visually appealing manner. My only comment and potential contribution is to change your years to have 2001 before 2015. The code is above your ggplot to change the years. It could have also been piped inot your code too. -JP
 ```
 
 
@@ -638,13 +668,15 @@ p + theme(plot.background = element_rect(fill = "gray10"),
         plot.subtitle = element_text(colour = "gray80"),
         plot.caption = element_text(colour = "gray80", vjust = 1),
         panel.grid.major = element_line(colour = "gray30"), 
-        panel.grid.minor = element_line(colour = "gray30")) +
+        panel.grid.minor = element_line(colour = "gray30"),
+        strip.text = element_text(color = 'gray90')) +
   geom_errorbar(aes(ymin = avg_age + qnorm(.025)*se,
                     ymax = avg_age + qnorm(.975)*se),
                 width = .4,
                 color = "gray90") +
   geom_point(size = 1, color = "gray90")
 
+# I think the black background does a better job of showing the distribution of your points. The color use really shows that cocaine is used more and as the amount of points for cocaine is much more dense than the other drugs. I did make one change for this plot. When you changed the color of the background, you did not change the colors of the facet wrapped drug names. I just included that and had the color is gray90. You can change it to whatever color you want. -JP
 ```
  
 * For a general audience
@@ -676,7 +708,8 @@ ggplot(pd1_rev_sum, aes(avg_age, education)) +
 
 #limit x axis
 # add labels for average age since limiting x axis
-  
+
+# I don't really have any changes to propose. I think this is just an awesome plot. My only comment would be to either change the color of the average age or to move it over slightly more to the right. Overall, I like the way this plot is already. I also wonder if changing your x-axis scale to 30 would make this a stronger plot. -JP
 ```
 
 * exploring ethnicity differences - initial (most likley not using)

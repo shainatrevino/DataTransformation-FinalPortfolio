@@ -2,14 +2,17 @@
 title: "Preliminary Explorations"
 author: "Shaina Trevino"
 date: "February 13, 2019"
-output: html_document
+output: 
+  html_document:
+    self_contained: TRUE
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-# install.packages("naniar")
+#install.packages("nhanesA")
+#library(nhanesA)
+#install.packages("naniar")
 library(tidyverse)
-library(nhanesA)
 library(here)
 library(rio)
 library(colorblindr)
@@ -257,6 +260,26 @@ ggplot(su_count, aes(year, n)) +
   geom_line(aes(color = drug))
 ```
 
+```{r JP edits}
+ggplot(su_count, aes(year, n)) + 
+  geom_line(aes(color = drug), size = 1) +
+  scale_x_continuous(breaks = c(2005, 2007,
+                                2009, 2011, 
+                                2013, 2015),
+                     labels = c("2005", "2007",
+                                "2009", "2011",
+                                "2013", "2015")) +
+  scale_color_viridis_d() +
+  ggrepel::geom_text_repel(data = filter(su_count, year == 2015),
+                                         aes(label = drug)) +
+  labs(x = " ",
+       y = "Amount of Drug Users",
+       title = "Drug Users across Years",
+       caption = "Data from NHANES datasets") +
+  guides(color = "none")
+```
+
+
 Changes to make for revision:
 * filter out marijuana to visualize illicit drugs per proposal
   * fct_reorder drug levels so that colors match order presented
@@ -318,8 +341,8 @@ ggplot(rpd, aes(year, n, color = drug)) +
             hjust = .4,
             vjust = -1.25,
             fontface = "bold") +
-  geom_vline(xintercept = 2009.25, color = "gray30", linetype = "dotted", size = .6) +
-  geom_vline(xintercept = 2012.8, color = "gray30", linetype = "dotted", size = .6) +
+  geom_vline(xintercept = 2009.25, color = "black", linetype = "dotdash", size = .6) +
+  geom_vline(xintercept = 2012.8, color = "black", linetype = "dotdash", size = .6) +
   annotate("text", label = "End of\n'War on Drugs'", x = 2007.7, y = 525, color = "gray30", size = 3) +
   annotate("text", label = "Marijuana 1st\nLeagalized", x = 2014.3, y = 525, color = "gray30", size = 3) + #nudging annotations for clarity
   scale_x_continuous(limits = c(2005, 2016),
@@ -341,6 +364,11 @@ ggplot(rpd, aes(year, n, color = drug)) +
        caption = "Data from the CDC's National Health and Nutrition Examination Survey") +
   scale_color_OkabeIto() 
 ```
+
+From Peer Review:
+(1) What is the scale people are reporting substance abuse in? Thousands? Or is this really the scale of reports (I just assume the numbers are larger than that in the US)? I would either add the scale to the y-axis or a caption explaining more about the data source and the low amount. 
+Overall, I really like this graph! I think your choice to facet by gender goes well with the trend in the data to show the spike in cocaine use (and increase in other drugs) in men as compared to women. I like your color use and your note on social trends that might be corresponding with the changing trends. Very well done!
+
 
 
 ### Initial Plot 2
@@ -397,6 +425,7 @@ To refine:
 rpud <- pud %>% 
   mutate(use_yr = days/365) %>% 
   filter(age != 80)
+#JP rpud$year <- fct_relevel(rpud$year, "2015", "2001") - have 2001 before 2015
 
 ggplot(rpud, aes(use_yr, fct_reorder(drug, use_yr), fill = drug)) +
   geom_density_ridges(aes(color = drug),
@@ -468,6 +497,11 @@ ggplot(rpud, aes(use_yr, year, fill = drug)) +
 
 #aspect ratio preview not working
 ```
+
+Suggestion from Peer Review:
+(1) These plots are beautiful! Upon first looking at the plot, I was a little confused by your use of both years to facet the difference and years of use as your variable of interest. I think I was expecting the plot to show me changes in the amount people used per day, month, year, etc due to your subtitle stating "Differences in 2001 vs 2015 use in the U.S." It would be helpful if you could make it clear that this is years of use. 
+
+I really like your use of lines at the bottom of each density plot to also show the density of responses for each drug at that time-point, it does a good job of showing what drugs are used more than others. I also like the colors and your choice to put each of the year facets for each drug right next to each other, makes it easier for comparision. 
 
 
 ### Initial Plot 3
@@ -638,7 +672,8 @@ p + theme(plot.background = element_rect(fill = "gray10"),
         plot.subtitle = element_text(colour = "gray80"),
         plot.caption = element_text(colour = "gray80", vjust = 1),
         panel.grid.major = element_line(colour = "gray30"), 
-        panel.grid.minor = element_line(colour = "gray30")) +
+        panel.grid.minor = element_line(colour = "gray30"),
+        strip.text = element_text(color = "gray90")) +
   geom_errorbar(aes(ymin = avg_age + qnorm(.025)*se,
                     ymax = avg_age + qnorm(.975)*se),
                 width = .4,
@@ -668,7 +703,7 @@ ggplot(pd1_rev_sum, aes(avg_age, education)) +
   theme(plot.background = element_rect(fill = "gray10"),
         axis.text = element_text(colour = "gray80"),
         axis.title = element_text(colour = "gray80"),
-        plot.title = element_text(colour = "gray80", hjust = 1.5),
+        plot.title = element_text(colour = "gray80", hjust = 1, size = 12.5),
         plot.caption = element_text(colour = "gray80", vjust = 1),
         panel.grid.major = element_line(colour = "gray30"), 
         panel.grid.minor = element_line(colour = "gray30"),
@@ -676,8 +711,15 @@ ggplot(pd1_rev_sum, aes(avg_age, education)) +
 
 #limit x axis
 # add labels for average age since limiting x axis
+#JP - change the color of the average age or to move it over slightly more to the right. I also wonder if changing your x-axis scale to 30 would make this a stronger plot. -JP
   
 ```
+
+Suggestions from Peer Review:
+(1) Your title didn't print correctly for me (its cut-off on one side or the other, depending on if it was in the console or zoomed in). I changed the hjust to be one and decreased the font to 12.5, and then it worked for me (did this in the code above).
+(2) I would also think about increased the size of the font within the plot, especially the mean years (or maybe just bolding them?). I felt I was straining my eyes a little to read them.
+
+I really like your use of the dark background and the blue band to display the error bars. I think choosing to turn your error bars into a band as opposed to the lines of error bars over jittered data points displays the patterns of your data clearer, so really good decision! 
 
 * exploring ethnicity differences - initial (most likley not using)
 
@@ -695,11 +737,16 @@ ggplot(pd_sum_eth, aes(education, avg_age)) +
   geom_col(aes(fill = fct_reorder(ethnicity_group, avg_age)), position = "dodge") +
   facet_wrap(~ fct_reorder(drug, avg_age), nrow = 1)
 
-ggplot(pd_sum_eth, aes(education, avg_age)) +
+ggplot(pd_sum_eth, aes(fct_reorder(drug, avg_age), avg_age)) +
   geom_col(aes(fill = fct_reorder(ethnicity_group, avg_age)), position = "dodge") +
-  facet_wrap(~ fct_reorder(drug, avg_age), ncol = 1) +
+  facet_wrap(~ education, ncol = 1) +
   coord_flip()
 
 ```
 
+Suggestion from Peer Review:
+(1) I think this is a cool exploration and could be really interesting! I understand this is pretty early on, but I thought that switching the facet to be education and your x-axis (before switching the coords) to be drug type might be easier to read. I changed the above plot in that way. 
+(2) I'd also be interested to see what patterns you find with use as the y-axis as opposed to age, I found myself reading the plot as use instead of age often (so maybe putting that axis under each facet might remove my error).
+
+Either way, a really cool relationship to look at!
 

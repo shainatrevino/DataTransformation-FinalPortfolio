@@ -338,7 +338,7 @@ ggplot(rpd, aes(year, n, color = drug)) +
         axis.text = element_text(color = "gray50")) +
   labs(y = "People reporting substance use\n",
        title = "Substance use trend from 2005 to 2015 in the U.S.",
-       caption = "Data from the CDC's National Health and Nutrition Examination Survey")
+       caption = "Data from the CDC's National Health and Nutrition Examination Survey") +
   scale_color_OkabeIto() 
 ```
 

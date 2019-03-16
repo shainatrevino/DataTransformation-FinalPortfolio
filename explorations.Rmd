@@ -369,6 +369,8 @@ From Peer Review:
 (1) What is the scale people are reporting substance abuse in? Thousands? Or is this really the scale of reports (I just assume the numbers are larger than that in the US)? I would either add the scale to the y-axis or a caption explaining more about the data source and the low amount. 
 Overall, I really like this graph! I think your choice to facet by gender goes well with the trend in the data to show the spike in cocaine use (and increase in other drugs) in men as compared to women. I like your color use and your note on social trends that might be corresponding with the changing trends. Very well done!
 
+(2) -	One very minor suggestion might be to adjust your tickmarks on the x-axis.  Since you already say “from 2005-2015” in the title, I think it would be more effective to present all of the dates in the ’05, ’07, etc. format that you are already using from 2007-2013, rather than having some that are spelled out, and some that are abbreviated. 
+
 
 
 ### Initial Plot 2
@@ -502,6 +504,11 @@ Suggestion from Peer Review:
 (1) These plots are beautiful! Upon first looking at the plot, I was a little confused by your use of both years to facet the difference and years of use as your variable of interest. I think I was expecting the plot to show me changes in the amount people used per day, month, year, etc due to your subtitle stating "Differences in 2001 vs 2015 use in the U.S." It would be helpful if you could make it clear that this is years of use. 
 
 I really like your use of lines at the bottom of each density plot to also show the density of responses for each drug at that time-point, it does a good job of showing what drugs are used more than others. I also like the colors and your choice to put each of the year facets for each drug right next to each other, makes it easier for comparision. 
+
+(2) -	This is another great visualization!  I think it does a really clear job of communicating the length of drug use and how that distribution has changed over time. 
+-	One minor suggestion – if you include the following code, it removes the extra space below 2001 and makes the plots a little less condensed vertically.  I don’t have good advice for picking the numbers – I just played with it until I got something that I thought preserved your graph without leaving too much space. 
+o	Code:   scale_y_discrete(expand = c(0, -1.1))
+
 
 
 ### Initial Plot 3
@@ -682,6 +689,12 @@ p + theme(plot.background = element_rect(fill = "gray10"),
 
 ```
  
+ 
+ Peer Review:
+ -	I think the version of this visual for the scientific community might be my favorite of your visuals!  I love the dark theme, and I think you have done a really great job of clearly and effectively displaying the information in a way that is also visually appealing.  My only suggestion would be to change the colors for the titles (drug type, cocaine, etc.) as they got lost (blended in) when you switched to the dark theme, but that is very minor. 
+o	Suggested code (within the theme() argument): strip.text = element_text(colour = "gray80")
+
+ 
 * For a general audience
  
 ```{r density}
@@ -721,6 +734,10 @@ Suggestions from Peer Review:
 
 I really like your use of the dark background and the blue band to display the error bars. I think choosing to turn your error bars into a band as opposed to the lines of error bars over jittered data points displays the patterns of your data clearer, so really good decision! 
 
+(2) -	I also really like how you adapted this visual for the general public in a way that is much more approachable by removing the error bars, while still maintaining the same information.  That said, I kind of miss the colors for each education level!  I know it is double encoding, but I also think the visual is really appealing and sort of draws you in with the color coding by education level on a dark background (just something to consider). 
+
+
+
 * exploring ethnicity differences - initial (most likley not using)
 
 ```{r ethnicity_diff_plot3}
@@ -749,4 +766,8 @@ Suggestion from Peer Review:
 (2) I'd also be interested to see what patterns you find with use as the y-axis as opposed to age, I found myself reading the plot as use instead of age often (so maybe putting that axis under each facet might remove my error).
 
 Either way, a really cool relationship to look at!
+
+(2) -	I like this visual too – I know it is more preliminary, but I think it is interesting to see how ethnicity and education relate to substance abuse, especially when presented in tandem with the third visual. 
+-	If you do end up using this visual, my suggestions (which I’m sure you would have done anyway) would be to change the colors to something prettier and color-blind safe.  It might also be interesting to try a plot similar to the general public version of visual 3, where you just color the variance by ethnicity. 
+
 

@@ -8,29 +8,808 @@ output:
 
 ```{r setup, include=FALSE}
 library(flexdashboard)
+#install.packages("naniar")
+library(tidyverse)
+library(here)
+library(rio)
+library(colorblindr)
+library(ggridges)
+library(ggridges)
+library(ungeviz)
+theme_set(theme_minimal())
 ```
+
+```{r import_data}
+demo <- import(here("data", "demo.csv"),
+               setclass = "tbl_df")
+
+su <- import(here("data", "su.csv"),
+             setclass = "tbl_df")
+
+pu <- import(here("data", "pu.csv"),
+             setclass = "tbl_df")
+```
+
+```{r tidy}
+# changing codes to years
+t_demo <- demo %>% 
+  janitor::clean_names() %>% 
+  mutate(year = case_when(sddsrvyr == 2 ~ 2001,
+                          sddsrvyr == 3 ~ 2003,
+                          sddsrvyr == 4 ~ 2005,
+                          sddsrvyr == 5 ~ 2007,
+                          sddsrvyr == 6 ~ 2009,
+                          sddsrvyr == 7 ~ 2011,
+                          sddsrvyr == 8 ~ 2013,
+                          sddsrvyr == 9 ~ 2015,
+                          TRUE ~ NA_real_))
+
+# creating labels for categorical variables
+t_demo <- t_demo %>% 
+  mutate(ethnicity = case_when(ridreth3 == 1 ~ "Hispanic", # combined to be more succinct
+                               ridreth3 == 2 ~ "Hispanic", 
+                               ridreth3 == 3 ~ "White",
+                               ridreth3 == 4 ~ "Black",
+                               ridreth3 == 6 ~ "Asian",
+                               ridreth3 == 7 ~ "Other/Multiracial",
+                               TRUE ~ NA_character_)) 
+
+t_demo <- t_demo %>% 
+  mutate(income = case_when(indhhin2 == 1 ~ "$0 - $4,999",
+                            indhhin2 == 2 ~ "$5,000 to $9,999",
+                            indhhin2 == 3 ~ "10,000 to $14,999",
+                            indhhin2 == 4 ~ "$15,000 to $19,999",
+                            indhhin2 == 5 ~ "$20,000 to $24,999",
+                            indhhin2 == 6 ~ "$25,000 to $34,999",
+                            indhhin2 == 7 ~ "$35,000 to $44,999",
+                            indhhin2 == 8 ~ "$45,000 to $54,999",
+                            indhhin2 == 9 ~ "$55,000 to $64,999",
+                            indhhin2 == 10 ~ "$65,000 to $74,999",
+                            indhhin2 == 11 ~ "$75,000 and Over",
+                            indhhin2 == 12 ~ "Over $20,000",
+                            indhhin2 == 13 ~ "Under $20,000",
+                            indhhin2 == 14 ~ "$75,000 to $99,999",
+                            indhhin2 == 15 ~ "$100,000 and over",
+                            indhhin2 == 77 ~ "Refused",
+                            indhhin2 == 99 ~ "Don't know",
+                            TRUE ~ NA_character_))
+
+t_demo <- t_demo %>% 
+  mutate(education = case_when(dmdeduc2 == 1 ~ "No diploma/GED",
+                               dmdeduc2 == 2 ~ "No diploma/GED",
+                               dmdeduc2 == 3 ~ "High school graduate/GED",
+                               dmdeduc2 == 4 ~ "Some college",
+                               dmdeduc2 == 5 ~ "College graduate or above",
+                               TRUE ~ NA_character_))
+
+# Coding SU variables
+su <- su %>% 
+  janitor::clean_names() %>% 
+  mutate(marijuana = case_when(duq200 == 1 ~ "Yes",
+                               duq200 == 2 ~ "No",
+                               TRUE ~ NA_character_)) %>% 
+  mutate(cocaine = case_when(duq250 == 1 ~ "Yes",
+                             duq250 == 2 ~ "No",
+                             TRUE ~ NA_character_)) %>% 
+  mutate(heroin = case_when(duq290 == 1 ~ "Yes",
+                            duq290 == 2 ~ "No",
+                            TRUE ~ NA_character_)) %>% 
+  mutate(meth = case_when(duq330 == 1 ~ "Yes",
+                          duq330 == 2 ~ "No",
+                          TRUE ~ NA_character_))
+
+# Coding sex variable
+t_demo <- t_demo %>% 
+   mutate(sex = case_when(riagendr == 1 ~ "Male", 
+                         riagendr == 2 ~ "Female", 
+                         TRUE ~ NA_character_)) 
+# joining demo with su
+d <- left_join(su, t_demo, by = "seqn")
+```
+
+```{r revised_plot1_data}
+rpd <- d %>% 
+  filter(heroin == "Yes" |
+         cocaine == "Yes" |
+         meth == "Yes" |
+         marijuana == "Yes") %>% 
+  select(heroin, cocaine, meth, marijuana, year, sex, ethnicity) %>% 
+  rename(Heroin = heroin,
+         Cocaine = cocaine,
+         Meth = meth,
+         Marijuana = marijuana) %>% 
+  gather(drug, response, Heroin:Marijuana) %>% 
+  filter(response == "Yes") %>% 
+  group_by(year, drug, sex) %>% 
+  count() %>% 
+  filter(drug != "Marijuana") %>% 
+  ungroup() %>% 
+  mutate(prop = (n/sum(n)))
+```
+
+```{r plot2_data}
+pud1 <- pu %>% 
+  janitor::clean_names() %>% 
+  filter(rxddrug == "LORAZEPAM" |
+         rxddrug == "ALPRAZOLAM" |
+         rxddrug == "DIAZEPAM" |
+         rxddrug == "CLONAZEPAM") %>% 
+  select(seqn, rxddrug, rxddays, rxdcount) %>% 
+  rename(drug = rxddrug,
+         days = rxddays, 
+         count = rxdcount)
+
+to_join <- t_demo %>% 
+  rename(age = ridageyr) %>% 
+  select(seqn, year, age, sex) 
+
+pud <- left_join(pud1, to_join, by = "seqn") %>% 
+  naniar::replace_with_na(replace = list(days = 99999)) %>% 
+  mutate(year = factor(year))
+
+rpud <- pud %>% 
+  mutate(use_yr = days/365) %>% 
+  filter(age != 80)
+#JP rpud$year <- fct_relevel(rpud$year, "2015", "2001") - have 2001 before 2015
+
+rpud1 <- pud %>% 
+  mutate(use_yr = days/365,
+         drug = case_when(drug == "LORAZEPAM" ~ "Ativan",
+                          drug == "CLONAZEPAM" ~ "Klonopin",
+                          drug == "DIAZEPAM" ~ "Valium",
+                          drug == "ALPRAZOLAM" ~ "Xanax",
+                          TRUE ~ NA_character_)) %>% 
+  filter(age != 80)
+```
+
+```{r plot3_data}
+pd <- d %>% 
+  rename(age_Marijuana = duq210, 
+         age_Cocaine = duq260, 
+         age_Heroin = duq300, 
+         age_Meth = duq340) %>% 
+  filter(year != 2005) %>% 
+  select(age_Cocaine, age_Marijuana, age_Heroin, age_Meth, income, sex, ethnicity, sex) %>% 
+  gather(drug, age_use, age_Cocaine:age_Meth) %>% 
+  separate(drug, c(NA, "drug"), sep = "_") %>% 
+  drop_na(age_use)
+
+pd1 <- d %>% 
+  rename(age_Marijuana = duq210, 
+         age_Cocaine = duq260, 
+         age_Heroin = duq300, 
+         age_Meth = duq340) %>% 
+  filter(year != 2005) %>% 
+  select(age_Cocaine, age_Marijuana, age_Heroin, age_Meth, income, sex, year, ethnicity, education) %>% 
+  gather(drug, age_use, age_Cocaine:age_Meth) %>% 
+  separate(drug, c(NA, "drug"), sep = "_") %>% 
+  mutate(income = case_when(income == "$0 - $4,999" ~ "Under $20,000", #grouped by 10s instead of 5s
+                            income == "$5,000 to $9,999" ~ "Under $20,000",
+                            income == "10,000 to $14,999" ~ "Under $20,000",
+                            income == "$15,000 to $19,999" ~ "Under $20,000",
+                            income == "$20,000 to $24,999" ~ "$20,000 to $34,999",
+                            income == "$25,000 to $34,999" ~ "$20,000 to $34,999",
+                            income == "$35,000 to $44,999" ~ "$35,000 to $54,999",
+                            income == "$45,000 to $54,999" ~ "$35,000 to $54,999",
+                            income == "$55,000 to $64,999" ~ "$55,000 to $99,999",
+                            income ==  "$65,000 to $74,999" ~ "$55,000 to $99,999",
+                            income ==  "$75,000 and Over" ~ "$75,000 and Over",
+                            income ==  "Over $20,000" ~ "Over $20,000",
+                            income ==  "Under $20,000" ~ "Under $20,000",
+                            income ==  "$75,000 to $99,999" ~ "$55,000 to $99,999",
+                            income ==  "$100,000 and over" ~ "$100,000 and over",
+                            TRUE ~ NA_character_),
+         income = factor(income,
+                         levels = c("Under $20,000",
+                                    "$20,000 to $34,999", 
+                                    "$35,000 to $54,999",
+                                    "55,000 to $99,999",
+                                    "$100,000 and over"))) %>% 
+  naniar::replace_with_na(replace = list(age_use = c(999, 777, 99, 0, 77))) %>% 
+  drop_na(age_use)
+
+pd1_rev <- pd1 %>% 
+  mutate(education = factor(education,
+                            levels = c("College graduate or above",
+                                       "Some college", 
+                                       "High school graduate/GED",
+                                       "No diploma/GED",
+                                       TRUE ~ NA_character_)),
+         ethnicity_group = case_when(ethnicity == "Hispanic" ~ "Non- White", # combined to be more succinct
+                                     ethnicity == "Hispanic" ~ "Non- White", 
+                                     ethnicity == "White" ~ "White",
+                                     ethnicity == "Black" ~ "Non- White",
+                                     ethnicity == "Asian" ~ "Non- White",
+                                     TRUE ~ NA_character_),
+         drug = factor(drug,
+                       levels = c("Marijuana",
+                                  "Cocaine",
+                                  "Meth",
+                                  "Heroin"))) %>% 
+  drop_na(age_use, education)
+
+pd1_rev_filter <- pd1_rev %>% 
+  filter(year == 2015 | 
+         year == 2013 ) %>% 
+  filter(drug != "Marijuana")
+
+pd1_rev_sum <- pd1_rev %>%  
+  filter(year == 2015 |
+         year == 2013 ) %>% 
+  group_by(drug, education) %>% 
+  summarize(avg_age = mean(age_use),
+            n = length(age_use),
+            sd = sd(age_use),
+            se = sd / sqrt(n)) %>% 
+  drop_na(education) %>% 
+  filter(drug != "Marijuana")
+
+p <- ggplot(pd1_rev_sum, aes(education, avg_age)) + 
+  geom_jitter(aes(x = education, y = age_use, color = education), data = pd1_rev_filter, alpha = .1, width = .25) +
+  geom_errorbar(aes(ymin = avg_age + qnorm(.025)*se,
+                    ymax = avg_age + qnorm(.975)*se),
+                width = .4) +
+  geom_point(size = 1) + # add jitter from other dataset (before point)
+  facet_wrap(~ drug, ncol = 1) + # added ncol = 1 to see more of variability 
+  coord_flip() + #coord flip to see labels better and differences in outcome
+  theme(legend.position = "none",
+        plot.caption = element_text(color = "gray50", size = 7)) +
+  labs(y = "Age of first use (in years)",
+       x = "",
+       title = "Age of First Substance Use by Education Level",
+       subtitle = "Distribution and point estimate for average age of first use",
+       caption = "Data from the CDC's National Health and Nutrition Examination Survey (2013-2015)")
+
+
+```
+
+
+# Final Visualizations
+
+TITLE OF PROJECT {.sidebar}
+----------------------
+
+EXPLANATION OF NAHANES DATA
+
+From final2018: The present study gathered data from the Center for Disease Control and Prevention's (CDC) National Health and Nutrition Examination Survey (NHANES). Using the 2015-2016 NHANES dataset. 
+
+Center for Disease Control and Prevention's (CDC) National Health and Nutrition Examination Survey (NHANES) dataset.
+
+The 2015-2016 years is the most recent data collected.
+
+Variables used & Questions examined
+
 
 Column {data-width=650}
 -----------------------------------------------------------------------
 
-### Chart A
+This text will be above all plots
 
-```{r}
+### Chart A Title
 
+```{r final_plot1}
+ggplot(rpd, aes(year, n, color = drug)) + 
+  geom_line(size = 1.1, alpha = .7) +
+  geom_point(size = 2.5) +
+  facet_wrap(~ sex) +
+  geom_text(data = filter(rpd, year == 2015),
+            aes(y = n, label = drug),
+            hjust = .4,
+            vjust = -1.25,
+            fontface = "bold") +
+  geom_vline(xintercept = 2009.25, color = "black", linetype = "dotdash", size = .6) +
+  geom_vline(xintercept = 2012.8, color = "black", linetype = "dotdash", size = .6) +
+  annotate("text", label = "End of\n'War on Drugs'", x = 2007.7, y = 525, color = "gray30", size = 3) +
+  annotate("text", label = "Marijuana 1st\nLeagalized", x = 2014.3, y = 525, color = "gray30", size = 3) + #nudging annotations for clarity
+  scale_x_continuous(limits = c(2005, 2016),
+                     breaks = c(2005, 2007, 2009, 2011, 2013, 2015),
+                     labels = c(2005, "'07", "'09", "'11", "'13", 2015)) +
+  theme(legend.position = "none",
+        panel.grid.minor.x = element_blank(),
+        panel.grid.major = element_line(color = "#e2dfd7"),
+        panel.grid.minor = element_line(color = "#e2dfd7"),
+        axis.title.x = element_blank(),
+        panel.background = element_rect(fill = "#f9f6ef", color = "#f9f6ef"), 
+        plot.background = element_rect(fill = "#f9f6ef", color = "#f9f6ef"),
+        strip.text = element_text(color = "black", face = "bold", size = 12),
+        plot.title = element_text(size = 14, hjust = .25),
+        plot.caption = element_text(color = "gray50", size = 7),
+        axis.text = element_text(color = "gray50")) +
+  labs(y = "People reporting substance use\n",
+       title = "Substance use trend from 2005 to 2015 in the U.S.",
+       caption = "Data from the CDC's National Health and Nutrition Examination Survey") +
+  scale_color_OkabeIto() 
 ```
+
+> A line plot showing trend....
 
 Column {data-width=350}
 -----------------------------------------------------------------------
 
-### Chart B
+### Chart B Title
 
-```{r}
+```{r final_plot2}
+ggplot(rpud1, aes(use_yr, year, fill = drug)) +
+  geom_density_ridges(color = "white",
+                      scale = .9,
+                      alpha = .5, 
+                      jittered_points = TRUE, 
+                      position = position_points_jitter(width = .1, 
+                                                        height = 0), 
+                      point_shape = '|', 
+                      point_size = 2, 
+                      point_alpha = .35,
+                      point_color = "black") +
+  facet_wrap(~ drug) +
+  scale_x_continuous(limits = c(0,40)) +
+  theme(legend.position = "none",
+        axis.title.y = element_blank(),
+        axis.text.y = element_text(face = "bold"),
+        axis.text.x = element_text(color = "gray50"),
+        strip.text = element_text(color = "gray30", face = "bold", size = 12),
+        plot.caption = element_text(color = "gray50", size = 7)) +
+  labs(x = "Years of use",
+       title = "Distribution of Addictive Benzodiazepine Prescription Use",
+       subtitle = "Differences in 2001 vs 2015 use in the U.S.",
+       caption = "Data from the CDC's National Health and Nutrition Examination Survey\n2001 Sample (n = 18,418) and 2015 Sample (n = 19,647)") +
+  scale_fill_viridis_d() +
+  scale_color_viridis_d()
+```
+
+> A density plot showing....
+
+### Chart C Title
+
+```{r final_plot3}
+p + theme(plot.background = element_rect(fill = "gray10"),
+        axis.text = element_text(colour = "gray80"),
+        axis.title = element_text(colour = "gray80"),
+        plot.title = element_text(colour = "gray80"),
+        plot.subtitle = element_text(colour = "gray80"),
+        plot.caption = element_text(colour = "gray80", vjust = 1),
+        panel.grid.major = element_line(colour = "gray30"), 
+        panel.grid.minor = element_line(colour = "gray30"),
+        strip.text = element_text(color = "gray90")) +
+  geom_errorbar(aes(ymin = avg_age + qnorm(.025)*se,
+                    ymax = avg_age + qnorm(.975)*se),
+                width = .4,
+                color = "gray90") +
+  geom_point(size = 1, color = "gray90")
 
 ```
 
-### Chart C
+> A ...
 
-```{r}
+# Evolution of Plot 1
+
+Sidebar Title {.sidebar}
+----------------------
+
+explanation of audience and aims
+
+main evolutions of plot 1.
+
+General Audience
+Goal: Show the trend in substance use from 2005 to 2015 by different substances and explore gender and racial differences
+Variables: Substance use is the count of the number of people who reported use in that year
+
+Changes to make for revision:
+* filter out marijuana to visualize illicit drugs per proposal
+  * fct_reorder drug levels so that colors match order presented
+  * annotate labels instead of legend - Since lines are so far apart, place label at end of trend line and delete the legend (will have to expand y limits)
+* Change count to percent
+  * increased cognitive load - small increases and harder to understand proportion
+* edit x axis to show years more clearly
+* make lines thicker, change color pallete
+* Place points for the years in there is data for
+* try facet by sex or ethnicity
+  * stack vertically on top of each other (wont work with annotated labels)
+  * change aspect ratio
+* modify theme elements and place labels to reduce cognitive load
+  * only major gridlines with data shown
+  * Bigger facet titles
+  * Adding labels
+    * get rid of x axis since it is clear it is year
+  * add space between y label and axis
+  * center title
+  * lighten axis text and caption
+* Identify dips and rises in trends and search for reasons why (policy, etc)
+  * Nov 2012 recreational marijuana legalized
+  * Obama ends war on drugs in 2009
+* Find best aspect ratio
+* tidy data differently
+  * get one dataset without joining
+  * filter for data, gather, group_by, and count
+* FIGURE OUT HOW TO PLACE ANNOTATES AT DIFFERENT POINTS ON FACETS AND GET WHITE BACKGROUND BEHIND ANNOTATE TEXT.
+
+Column {.tabset} {data-commentary-height=1200}
+-----------------------------------------------------------------------
+
+### Chart 1a Title {data-icon="fa-calendar"} 
+
+```{r initial_plot1}
+h_count <- d %>% 
+  group_by(year) %>% 
+  count(heroin) %>% 
+  filter(heroin == "Yes")
+
+c_count <- d %>% 
+  group_by(year) %>% 
+  count(cocaine) %>% 
+  filter(cocaine == "Yes")
+
+me_count <- d %>% 
+  group_by(year) %>% 
+  count(meth) %>% 
+  filter(meth == "Yes")
+
+ma_count <- d %>% 
+  group_by(year) %>% 
+  count(marijuana) %>% 
+  filter(marijuana == "Yes")
+
+cj <- right_join(h_count, c_count, by = "year")
+cj1 <- right_join(cj, me_count, by = "year")
+su_count1 <- right_join(cj1, ma_count, by = "year")
+
+su_count <- su_count1 %>% 
+  ungroup() %>% 
+  rename(Heroin = n.x,
+         Cocaine = n.y,
+         Meth = n.x.x,
+         Marijuana = n.y.y) %>% 
+  select(year, Heroin, Cocaine, Meth, Marijuana) %>% 
+  gather(drug, n, Heroin:Marijuana) 
+
+ggplot(su_count, aes(year, n)) + 
+  geom_line(aes(color = drug))
+```
+
+> Specific changes and why
+
+
+### Chart 1b Title Tab
+
+```{r initial_plot1_cleaned}
+ggplot(su_count, aes(year, n)) + 
+  geom_line(aes(color = drug), size = 1) +
+  scale_x_continuous(breaks = c(2005, 2007,
+                                2009, 2011, 
+                                2013, 2015),
+                     labels = c("2005", "2007",
+                                "2009", "2011",
+                                "2013", "2015")) +
+  scale_color_viridis_d() +
+  ggrepel::geom_text_repel(data = filter(su_count, year == 2015),
+                                         aes(label = drug)) +
+  labs(x = " ",
+       y = "Amount of Drug Users",
+       title = "Drug Users across Years",
+       caption = "Data from NHANES datasets") +
+  guides(color = "none")
+```
+
+> Specific changes and why
+
+### Chart 1c Title {data-icon="fa-calendar"} 
+
+
+```{r revised_plot1}
+ggplot(rpd, aes(year, n, color = drug)) + 
+  geom_line(size = 1.1, alpha = .7) +
+  geom_point(size = 2.5) +
+  facet_wrap(~ sex) +
+  geom_text(data = filter(rpd, year == 2015),
+            aes(y = n, label = drug),
+            hjust = .4,
+            vjust = -1.25,
+            fontface = "bold") +
+  geom_vline(xintercept = 2009.25, color = "black", linetype = "dotdash", size = .6) +
+  geom_vline(xintercept = 2012.8, color = "black", linetype = "dotdash", size = .6) +
+  annotate("text", label = "End of\n'War on Drugs'", x = 2007.7, y = 525, color = "gray30", size = 3) +
+  annotate("text", label = "Marijuana 1st\nLeagalized", x = 2014.3, y = 525, color = "gray30", size = 3) + #nudging annotations for clarity
+  scale_x_continuous(limits = c(2005, 2016),
+                     breaks = c(2005, 2007, 2009, 2011, 2013, 2015),
+                     labels = c(2005, "'07", "'09", "'11", "'13", 2015)) +
+  theme(legend.position = "none",
+        panel.grid.minor.x = element_blank(),
+        panel.grid.major = element_line(color = "#e2dfd7"),
+        panel.grid.minor = element_line(color = "#e2dfd7"),
+        axis.title.x = element_blank(),
+        panel.background = element_rect(fill = "#f9f6ef", color = "#f9f6ef"), 
+        plot.background = element_rect(fill = "#f9f6ef", color = "#f9f6ef"),
+        strip.text = element_text(color = "black", face = "bold", size = 12),
+        plot.title = element_text(size = 14, hjust = .25),
+        plot.caption = element_text(color = "gray50", size = 7),
+        axis.text = element_text(color = "gray50")) +
+  labs(y = "People reporting substance use\n",
+       title = "Substance use trend from 2005 to 2015 in the U.S.",
+       caption = "Data from the CDC's National Health and Nutrition Examination Survey") +
+  scale_color_OkabeIto() 
+```
+
+> Specific changes and why
+
+```{r suggested_changes}
+#(1) What is the scale people are reporting substance abuse in? Thousands? Or is this really the scale of reports (I just assume the numbers are larger than that in the US)? I would either add the scale to the y-axis or a caption explaining more about the data source and the low amount. 
+#Overall, I really like this graph! I think your choice to facet by gender goes well with the trend in the data to show the spike in cocaine use (and increase in other drugs) in men as compared to women. I like your color use and your note on social trends that might be corresponding with the changing trends. Very well done!
+
+#(2) -	One very minor suggestion might be to adjust your tickmarks on the x-axis.  Since you already say “from 2005-2015” in the title, I think it would be more effective to present all of the dates in the ’05, ’07, etc. format that you are already using from 2007-2013, rather than having some that are spelled out, and some that are abbreviated. 
+
+```
+
+
+# Evolution of Plot 2
+
+Sidebar Title {.sidebar}
+----------------------
+
+explanation of audience and aims
+
+main evolutions of plot 2.
+
+Scientific Audience
+Goal: Show the change in distribution of how many days a person used different addictive benzodiazepines from year 2001 to 2015
+Variables: days of use is continuous and types of benzodiazepines and year is categorical
+
+To refine:
+* change to ridgeline density to clearly see them since so much overlap
+* add variability with jitter
+  * added jittered points
+* change drug names to generic names for non-medical scientists 
+  * change case of drug categories
+* change days to years 
+  * limit x axis to 0 on ggridges (never less than 0 years)
+* change scale of ridges to to get less overlap and see jittered points better
+* professional color pallete
+* get rid of legend if adding color
+* limit data to those under 80
+* extend aspect ratio - wider for the years
+* add facet boxes
+* fct reorder density plots
+
+2ND Revision:
+* change color to white to not get rideline where there is no data (0 on x)
+* change facet to drug to see differences in years more clearly
+  * facet by drug type and put year on y axis, so it is easier to see differences between the years over the drug types
+* figure out how to change point color to black to see actual distribution of points
+
+
+Column {.tabset} {data-commentary-height=1200}
+-----------------------------------------------------------------------
+
+### Chart 2a Title {data-icon="fa-calendar"} 
+
+```{r initial_plot2}
+ggplot(pud, aes(drug, days)) +
+  geom_jitter(aes(color = year))
+```
+
+> Specific changes and why
+
+
+### Chart 2b Title Tab
+
+```{r revised_plot2}
+ggplot(rpud, aes(use_yr, fct_reorder(drug, use_yr), fill = drug)) +
+  geom_density_ridges(aes(color = drug),
+                      scale = .95,
+                      alpha = .5, 
+                      jittered_points = TRUE, 
+                      position = position_points_jitter(width = .1, 
+                                                        height = 0), 
+                      point_shape = '|', 
+                      point_size = 2, 
+                      point_alpha = .4) +
+  facet_wrap(~ year) +
+  scale_y_discrete(breaks = c("LORAZEPAM", "CLONAZEPAM", "DIAZEPAM", "ALPRAZOLAM"),
+                   labels = c("Ativan", "Klonopin", "Valium", "Xanax")) + # or delete and change case str_to_title and use specific name?
+  scale_x_continuous(limits = c(0,40)) +
+  theme(legend.position = "none",
+        axis.title.y = element_blank(),
+        strip.text = element_text(color = "gray30", face = "bold", size = 12),
+        plot.caption = element_text(color = "gray50", size = 7)) +
+  labs(x = "Years of use",
+       title = "Distribution of Addictive Benzodiazepine Prescription Use",
+       subtitle = "Differences in 2001 vs 2015 use in the U.S.",
+       caption = "Data from the CDC's National Health and Nutrition Examination Survey") +
+  scale_fill_viridis_d() +
+  scale_color_viridis_d()
+```
+
+> Specific changes and why
+
+### Chart 2c Title Tab
+
+```{r revised_plot2_final}
+ggplot(rpud1, aes(use_yr, year, fill = drug)) +
+  geom_density_ridges(color = "white",
+                      scale = .9,
+                      alpha = .5, 
+                      jittered_points = TRUE, 
+                      position = position_points_jitter(width = .1, 
+                                                        height = 0), 
+                      point_shape = '|', 
+                      point_size = 2, 
+                      point_alpha = .35,
+                      point_color = "black") +
+  facet_wrap(~ drug) +
+  scale_x_continuous(limits = c(0,40)) +
+  theme(legend.position = "none",
+        axis.title.y = element_blank(),
+        axis.text.y = element_text(face = "bold"),
+        axis.text.x = element_text(color = "gray50"),
+        strip.text = element_text(color = "gray30", face = "bold", size = 12),
+        plot.caption = element_text(color = "gray50", size = 7)) +
+  labs(x = "Years of use",
+       title = "Distribution of Addictive Benzodiazepine Prescription Use",
+       subtitle = "Differences in 2001 vs 2015 use in the U.S.",
+       caption = "Data from the CDC's National Health and Nutrition Examination Survey\n2001 Sample (n = 18,418) and 2015 Sample (n = 19,647)") +
+  scale_fill_viridis_d() +
+  scale_color_viridis_d()
+
+```
+
+> Specific changes and why
+
+```{r suggestions_plot2}
+#(1) These plots are beautiful! Upon first looking at the plot, I was a little confused by your use of both years to facet the difference and years of use as your variable of interest. I think I was expecting the plot to show me changes in the amount people used per day, month, year, etc due to your subtitle stating "Differences in 2001 vs 2015 use in the U.S." It would be helpful if you could make it clear that this is years of use. 
+
+#I really like your use of lines at the bottom of each density plot to also show the density of responses for each drug at that time-point, it does a good job of showing what drugs are used more than others. I also like the colors and your choice to put each of the year facets for each drug right next to each other, makes it easier for comparision. 
+
+#(2) -	This is another great visualization!  I think it does a really clear job of communicating the length of drug use and how that distribution has changed over time. 
+#-	One minor suggestion – if you include the following code, it removes the extra space below 2001 and makes the plots a little less condensed vertically.  I don’t have good advice for picking the numbers – I just played with it until I got something that I thought preserved your graph without leaving too much space. 
+#o	Code:   scale_y_discrete(expand = c(0, -1.1))
+```
+
+
+# Evolution of Plot 3
+
+Sidebar Title {.sidebar}
+----------------------
+
+explanation of audience and aims
+
+main evolutions of plot 3.
+
+Audience: Scientific community
+Goal: Show how age of first substance use differs by income for each substance type
+Variables: age of first substance use is categorical, income and substance types are categorical
+
+1
+* take out sex since there are barely any differences
+* create one average value to plot instead of distribution
+* condense income levels
+* have drug type on x axis and facet by income level (see crimes in denver hw2code)
+* change colors and theme layout
+* think of other type of graph (have point estimate with st. error since calculating average)
+* fct_reorder levels
+* take out marijana? illicit use
+* filter out and combine income levels
+* relevel income levels from lowest to highest
+* filter out age of use that are coded as missing or denied
+* calculate mean to plot instead of whatever is plotted above
+* make error bars for uncertainty
+  * calculate se for mean of age of use
+  
+  2
+
+* plot jittered raw distribution with point and uncertaintly over it
+* plot using only 2 years recent data for less overlap/confounds
+* add label for average age
+* could try stat density
+
+Column {.tabset} {data-commentary-height=1200}
+-----------------------------------------------------------------------
+
+### Chart 3a Title {data-icon="fa-calendar"} 
+
+```{r initial_p3}
+ggplot(pd, aes(income, age_use)) + 
+  geom_col(aes(fill = sex), position = "dodge") + #barely any sex differences
+  facet_wrap(~ drug)
+```
+
+> Specific changes and why
+
+
+### Chart 3b Title Tab
+
+```{r p3_bar}
+sum_pd1 <- pd1 %>% 
+  filter(income != "$75,000 and Over" |
+         income != "Over $20,000") %>% 
+  group_by(drug, income) %>% 
+  summarize(avg_age = mean(age_use),
+            n = length(age_use),
+            sd = sd(age_use),
+            se = sd / sqrt(n))
+
+
+ggplot(sum_pd1, aes(fct_reorder(drug, avg_age), avg_age)) + 
+  geom_col() +
+  facet_wrap(~ income)
+#can't really see differences - make jitter with point estimate and se bar
+#consider filtering for some years and taking out marijuana again
+```
+
+> Specific changes and why
+
+### TITLE tab
+
+```{r revised_white}
+p
+```
+
+### TITLE 
+
+```{r revised_p3}
+p + theme(plot.background = element_rect(fill = "gray10"),
+        axis.text = element_text(colour = "gray80"),
+        axis.title = element_text(colour = "gray80"),
+        plot.title = element_text(colour = "gray80"),
+        plot.subtitle = element_text(colour = "gray80"),
+        plot.caption = element_text(colour = "gray80", vjust = 1),
+        panel.grid.major = element_line(colour = "gray30"), 
+        panel.grid.minor = element_line(colour = "gray30"),
+        strip.text = element_text(color = "gray90")) +
+  geom_errorbar(aes(ymin = avg_age + qnorm(.025)*se,
+                    ymax = avg_age + qnorm(.975)*se),
+                width = .4,
+                color = "gray90") +
+  geom_point(size = 1, color = "gray90")
+```
+
+
+### Chart 3c Title Tab
+
+```{r density}
+#more general audience?
+ggplot(pd1_rev_sum, aes(avg_age, education)) + 
+  stat_confidence_density(aes(moe = se),
+                          fill = "cornflowerblue",
+                          height = .45) +
+  xlim(15, 35) +
+  geom_point(alpha = .8, size = 1.25) +
+  facet_wrap(~drug, ncol = 1) +
+  geom_text(aes(avg_age, education, label = round(avg_age, 1)),
+            nudge_x = 1.5,
+            nudge_y = .4,
+            size = 3,
+            color = "gray70") +
+  labs(title = "Differences in average age of first substance use based on education level",
+       x = "Average age of first use (in years)",
+       y = "") +
+  theme(plot.background = element_rect(fill = "gray10"),
+        axis.text = element_text(colour = "gray80"),
+        axis.title = element_text(colour = "gray80"),
+        plot.title = element_text(colour = "gray80", hjust = 1, size = 12.5),
+        plot.caption = element_text(colour = "gray80", vjust = 1),
+        panel.grid.major = element_line(colour = "gray30"), 
+        panel.grid.minor = element_line(colour = "gray30"),
+        strip.text = element_text(color = "gray80"))
+
+#limit x axis
+# add labels for average age since limiting x axis
+#JP - change the color of the average age or to move it over slightly more to the right. I also wonder if changing your x-axis scale to 30 would make this a stronger plot. -JP
+  
+```
+
+> Specific changes and why
+
+```{r peer_review_p3}
+# Peer Review:
+# -	I think the version of this visual for the scientific community might be my favorite of your visuals!  I love the dark theme, and I think you have done a really great job of clearly and effectively displaying the information in a way that is also visually appealing.  My only suggestion would be to change the colors for the titles (drug type, cocaine, etc.) as they got lost (blended in) when you switched to the dark theme, but that is very minor. 
+#o	Suggested code (within the theme() argument): strip.text = element_text(colour = "gray80")
+
+
+#(1) Your title didn't print correctly for me (its cut-off on one side or the other, depending on if it was in the console or zoomed in). I changed the hjust to be one and decreased the font to 12.5, and then it worked for me (did this in the code above).
+#(2) I would also think about increased the size of the font within the plot, especially the mean years (or maybe just bolding them?). I felt I was straining my eyes a little to read them.
+
+#I really like your use of the dark background and the blue band to display the error bars. I think choosing to turn your error bars into a band as opposed to the lines of error bars over jittered data points displays the patterns of your data clearer, so really good decision! 
+
+# -	I also really like how you adapted this visual for the general public in a way that is much more approachable by removing the error bars, while still maintaining the same information.  That said, I kind of miss the colors for each education level!  I know it is double encoding, but I also think the visual is really appealing and sort of draws you in with the color coding by education level on a dark background (just something to consider). 
+
 
 ```
 

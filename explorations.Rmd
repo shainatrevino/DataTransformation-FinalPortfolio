@@ -462,7 +462,7 @@ ggplot(rpud, aes(use_yr, fct_reorder(drug, use_yr), fill = drug)) +
 * figure out how to change point color to black to see actual distribution of points
 
 ```{r refined_plot2}
-rpud <- pud %>% 
+rpud1 <- pud %>% 
   mutate(use_yr = days/365,
          drug = case_when(drug == "LORAZEPAM" ~ "Ativan",
                           drug == "CLONAZEPAM" ~ "Klonopin",
@@ -471,7 +471,7 @@ rpud <- pud %>%
                           TRUE ~ NA_character_)) %>% 
   filter(age != 80)
 
-ggplot(rpud, aes(use_yr, year, fill = drug)) +
+ggplot(rpud1, aes(use_yr, year, fill = drug)) +
   geom_density_ridges(color = "white",
                       scale = .9,
                       alpha = .5, 

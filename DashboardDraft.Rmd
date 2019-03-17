@@ -1,5 +1,5 @@
 ---
-title: "Data Visualization Portfolio"
+title: "Untitled"
 output: 
   flexdashboard::flex_dashboard:
     orientation: columns
@@ -150,7 +150,7 @@ pud <- left_join(pud1, to_join, by = "seqn") %>%
 rpud <- pud %>% 
   mutate(use_yr = days/365) %>% 
   filter(age != 80)
-rpud$year <- fct_relevel(rpud$year, "2015", "2001") # from JP - have 2001 before 2015
+#JP rpud$year <- fct_relevel(rpud$year, "2015", "2001") - have 2001 before 2015
 
 rpud1 <- pud %>% 
   mutate(use_yr = days/365,
@@ -210,10 +210,10 @@ pd1 <- d %>%
 
 pd1_rev <- pd1 %>% 
   mutate(education = factor(education,
-                            levels = c("No diploma/GED",
-                                       "High school graduate/GED", 
-                                       "Some college",
-                                       "College graduate or above",
+                            levels = c("College graduate or above",
+                                       "Some college", 
+                                       "High school graduate/GED",
+                                       "No diploma/GED",
                                        TRUE ~ NA_character_)),
          ethnicity_group = case_when(ethnicity == "Hispanic" ~ "Non- White", # combined to be more succinct
                                      ethnicity == "Hispanic" ~ "Non- White", 
@@ -264,41 +264,31 @@ p <- ggplot(pd1_rev_sum, aes(education, avg_age)) +
 ```
 
 
-# Final Visualizations {data-icon="fa-chart-area"}
+# Final Visualizations
 
-Sidebar {.sidebar}
+TITLE OF PROJECT {.sidebar}
 ----------------------
 
-The visualizations you will see in this portfolio came from the Center for Disease Control and Prevention's (CDC) National Health and Nutrition Examination Survey (NHANES). Data collection began in 1999 and the most recent data collected and publicly available are from 2015-2016.
+EXPLANATION OF NAHANES DATA
 
-These data and codebooks are available online [here](https://www.cdc.gov/nchs/nhanes/about_nhanes.htm).
+From final2018: The present study gathered data from the Center for Disease Control and Prevention's (CDC) National Health and Nutrition Examination Survey (NHANES). Using the 2015-2016 NHANES dataset. 
 
-NHANES surveys around 5,000 participants accross the U.S. each year. Surveys include demographic, socioeconomic, dietary, and health related questions, as well as medical records, physiological assessments, and laboratory test. 
+Center for Disease Control and Prevention's (CDC) National Health and Nutrition Examination Survey (NHANES) dataset.
 
-The data presented in this portfolio came from three questionnaires: 
+The 2015-2016 years is the most recent data collected.
 
-* Demographics 
-
-* Drug use
-
-* Prescription medications 
-
-The three visualizations presented in this portfolio use various data from 2001 to 2015 to explore illicit substance use and addictive benzodiazepine prescrition use in a nationally representative sample.
-
-The final visualizations are presented on the right. 
-
-For more information about the evolution of each plot (i.e., how it changed over time) see individual tabs on top of this dashboard.
+Variables used & Questions examined
 
 
-Column {data-width=550 data-commentary-height=300}
+Column {data-width=650}
 -----------------------------------------------------------------------
 
-### Data Visualization #1: Illicit substance use trends by substance type, gender and major policy decisions in NHANES sample 
+This text will be above all plots
 
-```{r final_plot1, fig.width=8}
+### Chart A Title
+
+```{r final_plot1}
 ggplot(rpd, aes(year, n, color = drug)) + 
-  geom_vline(xintercept = 2009.25, color = "black", linetype = "dotdash", size = .6) +
-  geom_vline(xintercept = 2012.8, color = "black", linetype = "dotdash", size = .6) +
   geom_line(size = 1.1, alpha = .7) +
   geom_point(size = 2.5) +
   facet_wrap(~ sex) +
@@ -307,11 +297,13 @@ ggplot(rpd, aes(year, n, color = drug)) +
             hjust = .4,
             vjust = -1.25,
             fontface = "bold") +
-  annotate("text", label = "End of\n'War on Drugs'", x = 2007.8, y = 525, color = "gray30", size = 3) +
-  annotate("text", label = "Marijuana 1st\nLeagalized", x = 2014.2, y = 525, color = "gray30", size = 3) + #nudging annotations for clarity
+  geom_vline(xintercept = 2009.25, color = "black", linetype = "dotdash", size = .6) +
+  geom_vline(xintercept = 2012.8, color = "black", linetype = "dotdash", size = .6) +
+  annotate("text", label = "End of\n'War on Drugs'", x = 2007.7, y = 525, color = "gray30", size = 3) +
+  annotate("text", label = "Marijuana 1st\nLeagalized", x = 2014.3, y = 525, color = "gray30", size = 3) + #nudging annotations for clarity
   scale_x_continuous(limits = c(2005, 2016),
                      breaks = c(2005, 2007, 2009, 2011, 2013, 2015),
-                     labels = c("'05", "'07", "'09", "'11", "'13", "'15")) +
+                     labels = c(2005, "'07", "'09", "'11", "'13", 2015)) +
   theme(legend.position = "none",
         panel.grid.minor.x = element_blank(),
         panel.grid.major = element_line(color = "#e2dfd7"),
@@ -320,7 +312,7 @@ ggplot(rpd, aes(year, n, color = drug)) +
         panel.background = element_rect(fill = "#f9f6ef", color = "#f9f6ef"), 
         plot.background = element_rect(fill = "#f9f6ef", color = "#f9f6ef"),
         strip.text = element_text(color = "black", face = "bold", size = 12),
-        plot.title = element_text(size = 14, hjust = .35),
+        plot.title = element_text(size = 14, hjust = .25),
         plot.caption = element_text(color = "gray50", size = 7),
         axis.text = element_text(color = "gray50")) +
   labs(y = "People reporting substance use\n",
@@ -329,16 +321,14 @@ ggplot(rpd, aes(year, n, color = drug)) +
   scale_color_OkabeIto() 
 ```
 
-> This plot shows use of different illicit substances from 2005 to 2015 by gender. Most notably, males have a higher reported use of substances, especially cocaine. It is interesting to note that reported cocaine use declined after the end of the cultural 'War on Drugs' for both males and females, and heroin use declined for males. Also, after marijanua was legalized you can see a reduction in illicit drug use for both sexes, except for cocaine use in males. 
+> A line plot showing trend....
 
-Column 
+Column {data-width=350}
 -----------------------------------------------------------------------
 
+### Chart B Title
 
-
-### Data Visualization #2: Distribution of addictive benzodiazepine prescription use in 2001 vs. 2015 in NHANES sample
-
-```{r final_plot2, fig.width=7}
+```{r final_plot2}
 ggplot(rpud1, aes(use_yr, year, fill = drug)) +
   geom_density_ridges(color = "white",
                       scale = .9,
@@ -359,19 +349,18 @@ ggplot(rpud1, aes(use_yr, year, fill = drug)) +
         strip.text = element_text(color = "gray30", face = "bold", size = 12),
         plot.caption = element_text(color = "gray50", size = 7)) +
   labs(x = "Years of use",
-       title = "Distribution of Addictive Benzodiazepine Prescription Use in the U.S.",
-       subtitle = "Differences in years of use reported in 2001 vs 2015",
+       title = "Distribution of Addictive Benzodiazepine Prescription Use",
+       subtitle = "Differences in 2001 vs 2015 use in the U.S.",
        caption = "Data from the CDC's National Health and Nutrition Examination Survey\n2001 Sample (n = 18,418) and 2015 Sample (n = 19,647)") +
   scale_fill_viridis_d() +
   scale_color_viridis_d()
 ```
 
+> A density plot showing....
 
-> This plot shows differences in the distribution of number of years using different addictive prescription benzodiazepines in the year 2001 compared to 2015. As shown, there are more people in general reporting any years of use of Valium and Xanax in 2015 compared to 2001. More specifically, the plot shows that more people are reporting using Ativan and Xanax for more years in 2015 compared to 2001. However, more participants reported using Kolonopin for many years in 2001 compared to 2015. 
+### Chart C Title
 
-### Data Visualization #3: Average age of first illicit substance use by substance type and education level in NHANES sample
-
-```{r final_plot3, fig.width=7}
+```{r final_plot3}
 p + theme(plot.background = element_rect(fill = "gray10"),
         axis.text = element_text(colour = "gray80"),
         axis.title = element_text(colour = "gray80"),
@@ -389,85 +378,54 @@ p + theme(plot.background = element_rect(fill = "gray10"),
 
 ```
 
-> This plot shows differences in the distribution and mean age of first illicit substance use accross various education levels using data from the 2013-2015 NHANES samples. There are no observable significant differences in mean age of first use accross education levels. Although it is interesting to note that those with no high school degree reported using substances at slightly older age than those with a college degree. The most obvious observation is that more people reported using cocaine compared to both meth and heroin. However, there seems to be more variability in age of first heroin use as seen by the distribution of data points, although there were much less participants reporting any heroin use. 
+> A ...
 
-# Evolution of Plot 1 {data-icon="fa-syringe"}
+# Evolution of Plot 1
 
 Sidebar Title {.sidebar}
 ----------------------
 
-This plot is geared towards a general audience and aims to show trends in illicit substance use from 2005 to 2015 and explore differences related to substance type, gender, and major policy decisions. 
+explanation of audience and aims
 
-Substance use is a count of the number of participants that reported use of each illicit substance in the last year in each NHANES sample from 2005 to 2015. 
+main evolutions of plot 1.
 
-In the final plot, I made the following revisions:
+General Audience
+Goal: Show the trend in substance use from 2005 to 2015 by different substances and explore gender and racial differences
+Variables: Substance use is the count of the number of people who reported use in that year
 
-* Added points on plot to represent acutal data values for years measured and more accurately portray data
-
-* Added reference lines for major policies that might affect trends in use
-
-* Changed aspect ratio to more accurately show the passage of time
-
-* Changed color pallete to not include yellow line that is hard to see, but is still colorblind friendly
-
-* Modified theme elements to be more visually appealing to general audience:
-
-  * lightened axis labels and caption to grey 
-  
-  * increased size and bolded facet titles 
-  
-  * centered plot title
-  
-  * removed minor gridlines that did not correspond to data points
-
-The final plot is shown immediately to the right, and the each iteration can be seen in the right panel by clicking through each tab.
-
-
-Column {data-width=800}
------------------------------------------------------------------------
-
-### Final Revised Plot 1 
-
-```{r revised_plot1, fig.width=8}
-ggplot(rpd, aes(year, n, color = drug)) + 
-  geom_vline(xintercept = 2009.25, color = "black", linetype = "dotdash", size = .6) +
-  geom_vline(xintercept = 2012.8, color = "black", linetype = "dotdash", size = .6) +  
-  geom_line(size = 1.1, alpha = .7) +
-  geom_point(size = 2.5) +
-  facet_wrap(~ sex) +
-  geom_text(data = filter(rpd, year == 2015),
-            aes(y = n, label = drug),
-            hjust = .4,
-            vjust = -1.25,
-            fontface = "bold") +
-  annotate("text", label = "End of\n'War on Drugs'", x = 2007.8, y = 525, color = "gray30", size = 3) +
-  annotate("text", label = "Marijuana 1st\nLeagalized", x = 2014.2, y = 525, color = "gray30", size = 3) + #nudging annotations for clarity
-  scale_x_continuous(limits = c(2005, 2016),
-                     breaks = c(2005, 2007, 2009, 2011, 2013, 2015),
-                     labels = c("'05", "'07", "'09", "'11", "'13", "'15")) +
-  theme(legend.position = "none",
-        panel.grid.minor.x = element_blank(),
-        panel.grid.major = element_line(color = "#e2dfd7"),
-        panel.grid.minor = element_line(color = "#e2dfd7"),
-        axis.title.x = element_blank(),
-        panel.background = element_rect(fill = "#f9f6ef", color = "#f9f6ef"), 
-        plot.background = element_rect(fill = "#f9f6ef", color = "#f9f6ef"),
-        strip.text = element_text(color = "black", face = "bold", size = 12),
-        plot.title = element_text(size = 14, hjust = .35),
-        plot.caption = element_text(color = "gray50", size = 7),
-        axis.text = element_text(color = "gray50")) +
-  labs(y = "People reporting substance use\n",
-       title = "Substance use trend from 2005 to 2015 in the U.S.",
-       caption = "Data from the CDC's National Health and Nutrition Examination Survey") +
-  scale_color_OkabeIto() 
-```
-
-> This plot shows use of different illicit substances from 2005 to 2015 by gender. Most notably, males have a higher reported use of substances, especially cocaine. It is interesting to note that reported cocaine use declined after the end of the cultural 'War on Drugs' for both males and females, and heroin use declined for males. Also, after marijanua was legalized you can see a reduction in illicit drug use for both sexes, except for cocaine use in males. 
+Changes to make for revision:
+* filter out marijuana to visualize illicit drugs per proposal
+  * fct_reorder drug levels so that colors match order presented
+  * annotate labels instead of legend - Since lines are so far apart, place label at end of trend line and delete the legend (will have to expand y limits)
+* Change count to percent
+  * increased cognitive load - small increases and harder to understand proportion
+* edit x axis to show years more clearly
+* make lines thicker, change color pallete
+* Place points for the years in there is data for
+* try facet by sex or ethnicity
+  * stack vertically on top of each other (wont work with annotated labels)
+  * change aspect ratio
+* modify theme elements and place labels to reduce cognitive load
+  * only major gridlines with data shown
+  * Bigger facet titles
+  * Adding labels
+    * get rid of x axis since it is clear it is year
+  * add space between y label and axis
+  * center title
+  * lighten axis text and caption
+* Identify dips and rises in trends and search for reasons why (policy, etc)
+  * Nov 2012 recreational marijuana legalized
+  * Obama ends war on drugs in 2009
+* Find best aspect ratio
+* tidy data differently
+  * get one dataset without joining
+  * filter for data, gather, group_by, and count
+* FIGURE OUT HOW TO PLACE ANNOTATES AT DIFFERENT POINTS ON FACETS AND GET WHITE BACKGROUND BEHIND ANNOTATE TEXT.
 
 Column {.tabset data-commentary-height=1200}
 -----------------------------------------------------------------------
 
-### Initial Plot 
+### Chart 1a Title {data-icon="fa-calendar"} 
 
 ```{r initial_plot1}
 h_count <- d %>% 
@@ -485,24 +443,32 @@ me_count <- d %>%
   count(meth) %>% 
   filter(meth == "Yes")
 
+ma_count <- d %>% 
+  group_by(year) %>% 
+  count(marijuana) %>% 
+  filter(marijuana == "Yes")
+
 cj <- right_join(h_count, c_count, by = "year")
-su_count1 <- right_join(cj, me_count, by = "year")
+cj1 <- right_join(cj, me_count, by = "year")
+su_count1 <- right_join(cj1, ma_count, by = "year")
 
 su_count <- su_count1 %>% 
   ungroup() %>% 
   rename(Heroin = n.x,
          Cocaine = n.y,
-         Meth = n) %>% 
-  select(year, Heroin, Cocaine, Meth) %>% 
-  gather(drug, n, Heroin:Meth) 
+         Meth = n.x.x,
+         Marijuana = n.y.y) %>% 
+  select(year, Heroin, Cocaine, Meth, Marijuana) %>% 
+  gather(drug, n, Heroin:Marijuana) 
 
 ggplot(su_count, aes(year, n)) + 
   geom_line(aes(color = drug))
 ```
 
-> This is the initial line plot I made with a count of the number of participants reporting any substance use in NHANES samples from 2005 to 2015 - colored by substance type. This default plot does show the differences in substance types and trends over time, but needs to be improved. Specifically, the year on the x axis is not formatted correctly and the arrangement of the levels in the legend are counterintuitive.  
+> Specific changes and why
 
-### First Revision
+
+### Chart 1b Title Tab
 
 ```{r initial_plot1_cleaned}
 ggplot(su_count, aes(year, n)) + 
@@ -523,37 +489,57 @@ ggplot(su_count, aes(year, n)) +
   guides(color = "none")
 ```
 
-> Shown above is the first revision of the initial plot in which I changed the default colors to a colorblind friendly pallete and increased the line thickness. To further reduce cognitive load, I removed the legend and used ggrepel to add labels to the end of each trend line since the lines are far enough apart. To clean up the x axis and increase data to ink ratio, I reformatted the labels to correspond to the years of data collection and removed the "date" title that was redundant and obvious. Lastly, I added a plot title, y axis title, and caption for clarity. The main problem with this plot is I was not able to facet by sex because of the way I calculated summaries and joined files. Therefore, for the next iteration I had to tidy my data differently. 
+> Specific changes and why
 
-### Second Revision
+### Chart 1c Title {data-icon="fa-calendar"} 
 
-```{r 1stRevise_p1}
+
+```{r revised_plot1}
 ggplot(rpd, aes(year, n, color = drug)) + 
   geom_line(size = 1.1, alpha = .7) +
+  geom_point(size = 2.5) +
   facet_wrap(~ sex) +
   geom_text(data = filter(rpd, year == 2015),
             aes(y = n, label = drug),
             hjust = .4,
             vjust = -1.25,
             fontface = "bold") +
+  geom_vline(xintercept = 2009.25, color = "black", linetype = "dotdash", size = .6) +
+  geom_vline(xintercept = 2012.8, color = "black", linetype = "dotdash", size = .6) +
+  annotate("text", label = "End of\n'War on Drugs'", x = 2007.7, y = 525, color = "gray30", size = 3) +
+  annotate("text", label = "Marijuana 1st\nLeagalized", x = 2014.3, y = 525, color = "gray30", size = 3) + #nudging annotations for clarity
   scale_x_continuous(limits = c(2005, 2016),
                      breaks = c(2005, 2007, 2009, 2011, 2013, 2015),
-                     labels = c("'05", "'07", "'09", "'11", "'13", "'15")) +
+                     labels = c(2005, "'07", "'09", "'11", "'13", 2015)) +
   theme(legend.position = "none",
+        panel.grid.minor.x = element_blank(),
+        panel.grid.major = element_line(color = "#e2dfd7"),
+        panel.grid.minor = element_line(color = "#e2dfd7"),
         axis.title.x = element_blank(),
-        plot.caption = element_text(size = 7)) +
+        panel.background = element_rect(fill = "#f9f6ef", color = "#f9f6ef"), 
+        plot.background = element_rect(fill = "#f9f6ef", color = "#f9f6ef"),
+        strip.text = element_text(color = "black", face = "bold", size = 12),
+        plot.title = element_text(size = 14, hjust = .25),
+        plot.caption = element_text(color = "gray50", size = 7),
+        axis.text = element_text(color = "gray50")) +
   labs(y = "People reporting substance use\n",
        title = "Substance use trend from 2005 to 2015 in the U.S.",
        caption = "Data from the CDC's National Health and Nutrition Examination Survey") +
-  scale_color_viridis_d() 
+  scale_color_OkabeIto() 
+```
+
+> Specific changes and why
+
+```{r suggested_changes}
+#(1) What is the scale people are reporting substance abuse in? Thousands? Or is this really the scale of reports (I just assume the numbers are larger than that in the US)? I would either add the scale to the y-axis or a caption explaining more about the data source and the low amount. 
+#Overall, I really like this graph! I think your choice to facet by gender goes well with the trend in the data to show the spike in cocaine use (and increase in other drugs) in men as compared to women. I like your color use and your note on social trends that might be corresponding with the changing trends. Very well done!
+
+#(2) -	One very minor suggestion might be to adjust your tickmarks on the x-axis.  Since you already say “from 2005-2015” in the title, I think it would be more effective to present all of the dates in the ’05, ’07, etc. format that you are already using from 2007-2013, rather than having some that are spelled out, and some that are abbreviated. 
+
 ```
 
 
-> In order to produce this plot that is faceted by sex, I had to first had to go back to the original joined data and filter for participants that reported use, select the substances and demographics of interest, then gathered all substances and responses, grouped by year, drug, and sex, and then counted the number of participants reporting use. This resuled in a dataframe that I was able to use to facet by sex with the same data that was produced for the initial plot (but with much less code). 
-To reduce overlap of labels and reduce cognitive load, I used the `annotate()` function to place labels for each substance use at the end of each trend line (instead of ggrepel) that allowed me to select the best placement for the labels. Then, I increased the limits of the x axis to account for the addition of the labels. Additionally, I abbreviated the year labels on the x axis per peer review suggestion and added space between the y axis label and the axis text - this is much easier on the eyes and just as easy to understand. I also updated the title, caption, and y axis title to be more descriptive and informative to a general audience. This is the last revision before the changes made for the final plot (as described in the sidebar).
-
-
-# Evolution of Plot 2 {data-icon="fa-prescription"}
+# Evolution of Plot 2
 
 Sidebar Title {.sidebar}
 ----------------------
@@ -588,41 +574,8 @@ To refine:
   * facet by drug type and put year on y axis, so it is easier to see differences between the years over the drug types
 * figure out how to change point color to black to see actual distribution of points
 
-Column {data-width=800}
------------------------------------------------------------------------
 
-### Final Revised Plot 2 
-
-```{r revised_plot2_final}
-ggplot(rpud1, aes(use_yr, year, fill = drug)) +
-  geom_density_ridges(color = "white",
-                      scale = .9,
-                      alpha = .5, 
-                      jittered_points = TRUE, 
-                      position = position_points_jitter(width = .1, 
-                                                        height = 0), 
-                      point_shape = '|', 
-                      point_size = 2, 
-                      point_alpha = .35,
-                      point_color = "black") +
-  facet_wrap(~ drug) +
-  scale_x_continuous(limits = c(0,40)) +
-  theme(legend.position = "none",
-        axis.title.y = element_blank(),
-        axis.text.y = element_text(face = "bold"),
-        axis.text.x = element_text(color = "gray50"),
-        strip.text = element_text(color = "gray30", face = "bold", size = 12),
-        plot.caption = element_text(color = "gray50", size = 7)) +
-  labs(x = "Years of use",
-       title = "Distribution of Addictive Benzodiazepine Prescription Use",
-       subtitle = "Differences in 2001 vs 2015 use in the U.S.",
-       caption = "Data from the CDC's National Health and Nutrition Examination Survey\n2001 Sample (n = 18,418) and 2015 Sample (n = 19,647)") +
-  scale_fill_viridis_d() +
-  scale_color_viridis_d()
-```
-
-
-Column {.tabset data-commentary-height=1200}
+Column {.tabset} {data-commentary-height=1200}
 -----------------------------------------------------------------------
 
 ### Chart 2a Title {data-icon="fa-calendar"} 
@@ -633,7 +586,6 @@ ggplot(pud, aes(drug, days)) +
 ```
 
 > Specific changes and why
-> A density plot showing....
 
 
 ### Chart 2b Title Tab
@@ -669,7 +621,32 @@ ggplot(rpud, aes(use_yr, fct_reorder(drug, use_yr), fill = drug)) +
 
 ### Chart 2c Title Tab
 
-```{r}
+```{r revised_plot2_final}
+ggplot(rpud1, aes(use_yr, year, fill = drug)) +
+  geom_density_ridges(color = "white",
+                      scale = .9,
+                      alpha = .5, 
+                      jittered_points = TRUE, 
+                      position = position_points_jitter(width = .1, 
+                                                        height = 0), 
+                      point_shape = '|', 
+                      point_size = 2, 
+                      point_alpha = .35,
+                      point_color = "black") +
+  facet_wrap(~ drug) +
+  scale_x_continuous(limits = c(0,40)) +
+  theme(legend.position = "none",
+        axis.title.y = element_blank(),
+        axis.text.y = element_text(face = "bold"),
+        axis.text.x = element_text(color = "gray50"),
+        strip.text = element_text(color = "gray30", face = "bold", size = 12),
+        plot.caption = element_text(color = "gray50", size = 7)) +
+  labs(x = "Years of use",
+       title = "Distribution of Addictive Benzodiazepine Prescription Use",
+       subtitle = "Differences in 2001 vs 2015 use in the U.S.",
+       caption = "Data from the CDC's National Health and Nutrition Examination Survey\n2001 Sample (n = 18,418) and 2015 Sample (n = 19,647)") +
+  scale_fill_viridis_d() +
+  scale_color_viridis_d()
 
 ```
 
@@ -686,7 +663,7 @@ ggplot(rpud, aes(use_yr, fct_reorder(drug, use_yr), fill = drug)) +
 ```
 
 
-# Evolution of Plot 3 {data-icon="fa-graduation-cap"}
+# Evolution of Plot 3
 
 Sidebar Title {.sidebar}
 ----------------------
@@ -761,8 +738,7 @@ ggplot(sum_pd1, aes(fct_reorder(drug, avg_age), avg_age)) +
 ### TITLE tab
 
 ```{r revised_white}
-p  +
-  scale_color_OkabeIto(darken = .2)
+p
 ```
 
 ### TITLE 

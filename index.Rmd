@@ -387,7 +387,7 @@ p + theme(plot.background = element_rect(fill = "gray10"),
 
 ```
 
-> This plot shows differences in the distribution and mean age of first illicit substance use accross various education levels using data from the 2013-2015 NHANES samples. There are no observable significant differences in mean age of first use accross education levels. Although it is interesting to note that those with no high school degree reported using substances at slightly older age than those with a college degree. The most obvious observation is that more people reported using cocaine compared to both meth and heroin. However, there seems to be more variability in age of first heroin use as seen by the distribution of data points, although there were much less participants reporting any heroin use. 
+> This plot shows differences in the distribution and mean age of first illicit substance use accross various education levels using data from the 2013-2015 NHANES samples. There are no observable significant differences in mean age of first use accross education levels. Although it is interesting to note that those with no high school degree reported using substances at slightly older age than those with a college degree. The most obvious observation is that more people reported using cocaine compared to both meth and heroin. However, there seems to be more variability in age of first heroin use as seen by the distribution of data points, although there were less participants reporting any heroin use. 
 
 # Evolution of Plot 1 {data-icon="fa-syringe"}
 
@@ -396,27 +396,27 @@ Sidebar Title {.sidebar}
 
 This plot is geared towards a general audience and aims to show trends in illicit substance use from 2005 to 2015 and explore differences related to substance type, gender, and major policy decisions. 
 
-Substance use is a count of the number of participants that reported use of each illicit substance in the last year in each NHANES sample from 2005 to 2015. 
+Substance use is a count of the number of participants that reported use of each illicit substance in the last year. 
 
 In the final plot, I made the following revisions:
 
-* Added points on plot to represent acutal data values for years measured and more accurately portray data
+* Added points to represent acutal data values for years measured and more accurately portray data
 
 * Added reference lines for major policies that might affect trends in use
 
 * Changed aspect ratio to more accurately show the passage of time
 
-* Changed color pallete to not include yellow line that is hard to see, but is still colorblind friendly
+* Changed color pallete to remove yellow that is hard to see and stay colorblind friendly
 
-* Modified theme elements to be more visually appealing to general audience:
+* Modified theme elements to be more visually appealing to general audience including:
 
-  * lightened axis labels and caption to grey 
+* Lightened axis labels and caption to grey 
   
-  * increased size and bolded facet titles 
+* Increased size and bolded facet titles 
+ 
+* Centered plot title
   
-  * centered plot title
-  
-  * removed minor gridlines that did not correspond to data points
+* Removed minor gridlines that don't correspond to data points
 
 The final plot is shown immediately to the right, and the each iteration can be seen in the right panel by clicking through each tab.
 
@@ -556,23 +556,23 @@ To reduce overlap of labels and reduce cognitive load, I used the `annotate()` f
 Sidebar Title {.sidebar}
 ----------------------
 
-This plot is geared towards an academic audience and aims to show differences in the amount of time people are reporting using addictive benzodiazepine prescriptions in 2015 compared to 2001.
+This plot is geared towards an academic audience and aims to show differences in the amount of time people report using addictive benzodiazepine prescriptions in 2015 compared to 2001.
 
-The final revisions I made for this plot:
+One major revision was changing the `color` of the ridgelines to white to get rid of trailing lines connecting spaced out data points, while changing the `point_color` to black in the same function so the points wouldn't disappear when `color = "white"`
 
-* Changed the `color` of the ridgelines to white to get rid of trailing lines connecting spaced out data points, and changed the `point_color` to black in the same function so the points wouldn't disappear when `color = "white"` 
+Other minor revision I made:
 
 * Slightly extended the aspect ratio width to better align with scale of x axis
  
-* Removed the extra space on the y axis below the bottom categories to remove excess, useless plot space - per peer review comment
+* Removed the extra space on the y axis below the categories to remove useless plot space
 
-* Changed theme elements to decrease cognitive load
+* Changed theme elements to decrease cognitive load including:
 
-  * Decreased size of caption and changed color to grey so that it doesn't stand out as a focal point
+ * Decreased size of caption and changed color to grey so that it doesn't stand out as a focal point
   
-  * Bolded and increased size of prescription categories and comparison years
+ * Bolded and increased size of prescription categories and comparison years
   
-  * Changed x axis labels to grey
+ * Changed x axis labels to grey
   
 The final plot is shown immediately to the right, and the each iteration can be seen in the right panel by clicking through each tab.
 

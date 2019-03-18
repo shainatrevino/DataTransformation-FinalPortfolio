@@ -706,28 +706,18 @@ This plot is geared towards an academic audience and aims to show differences in
 
 For the final version of this plot, I made the following revisions:
 
-1
-* take out sex since there are barely any differences
-* create one average value to plot instead of distribution
-* condense income levels
-* have drug type on x axis and facet by income level (see crimes in denver hw2code)
-* change colors and theme layout
-* think of other type of graph (have point estimate with st. error since calculating average)
-* fct_reorder levels
-* take out marijana? illicit use
-* filter out and combine income levels
-* relevel income levels from lowest to highest
-* filter out age of use that are coded as missing or denied
-* calculate mean to plot instead of whatever is plotted above
-* make error bars for uncertainty
-  * calculate se for mean of age of use
-  
-  2
+* Dark theme
 
-* plot jittered raw distribution with point and uncertaintly over it
-* plot using only 2 years recent data for less overlap/confounds
-* add label for average age
-* could try stat density
+* Change color of error bars and point
+
+* Back to default colors for point estimate
+
+Peer Review:
+I think the version of this visual for the scientific community might be my favorite of your visuals!  I love the dark theme, and I think you have done a really great job of clearly and effectively displaying the information in a way that is also visually appealing.  My only suggestion would be to change the colors for the titles (drug type, cocaine, etc.) as they got lost (blended in) when you switched to the dark theme, but that is very minor. 
+I know it is double encoding, but I also think the visual is really appealing and sort of draws you in with the color coding by education level on a dark background (just something to consider). 
+
+
+
 
 Column {data-width=800}
 -----------------------------------------------------------------------
@@ -758,7 +748,7 @@ Column {.tabset data-commentary-height=1200}
 
 ```{r initial_p3}
 ggplot(pd, aes(income, age_use)) + 
-  geom_col(aes(fill = sex), position = "dodge") + #barely any sex differences
+  geom_col(aes(fill = sex), position = "dodge") + 
   facet_wrap(~ drug)
 ```
 
@@ -779,8 +769,7 @@ sum_pd1 <- pd1 %>%
 ggplot(sum_pd1, aes(fct_reorder(drug, avg_age), avg_age)) + 
   geom_col(aes(fill = sex), position = "dodge") +
   facet_wrap(~ education)
-#can't really see differences - make jitter with point estimate and se bar
-#consider filtering for some years and taking out marijuana again
+
 ```
 
 > In the first revision of this plot, I substituted education groups as a proxy for education levels, since there are less inherent categories. Also, I summarized and plotted a mean age of first use by substance type, income, and sex instead of the previous count. As you can see, there are not many observable differences related to sex. So, to reduce grouping variables and make the plot more succinct, I will take out sex from these data in the next rendition. Although this plot does show differences in average age of use, it doesn't show any uncertainty around the estimate or the actual distribution of the data that would be interpretable and helpful for an academic audience. 
@@ -793,23 +782,31 @@ ggplot(pd1_rev_sum, aes(education, avg_age)) +
   geom_errorbar(aes(ymin = avg_age + qnorm(.025)*se,
                     ymax = avg_age + qnorm(.975)*se),
                 width = .4) +
-  geom_point(size = 1) + # add jitter from other dataset (before point)
-  facet_wrap(~ drug) + # added ncol = 1 to see more of variability 
-  coord_flip() + #coord flip to see labels better and differences in outcome
-  labs(y = "Age of first use (in years)",
-       x = "",
-       title = "Age of First Substance Use by Education Level",
-       subtitle = "Distribution and point estimate for average age of first use",
-       caption = "Data from the CDC's National Health and Nutrition Examination Survey (2013-2015)")
+  geom_point(size = 1) + 
+  facet_wrap(~ drug) + 
+  coord_flip() 
 ```
 
 > releveled education categories
 jitter with point estimate using different datasets
+#can't really see differences in previous plot - make jitter with point estimate and se bar
+# add jitter from other dataset (before point)
+#coord flip to see labels better and differences in outcome
+* take out sex since there are barely any differences
+* create one average value to plot instead of distribution
+  * calculate mean to plot instead of whatever is plotted above
+  * make error bars for uncertainty
+  * calculate se for mean of age of use
+* have  education level on x axis and facet by drug to more clearly see differences in education level for each drug.
+* coord flip?
+* fct_reorder levels of education manually according to progression
+* filter out NAs
+* plot jittered raw distribution with point and uncertaintly over it
+* decresed alpha a lot because of overplotting
 
 ### Fourth Revision
 
 ```{r density}
-#more general audience?
 ggplot(pd1_rev_sum, aes(avg_age, education)) + 
   stat_confidence_density(aes(moe = se),
                           fill = "maroon",
@@ -821,16 +818,27 @@ ggplot(pd1_rev_sum, aes(avg_age, education)) +
             nudge_x = 1.5,
             nudge_y = .4,
             size = 3,
-            color = "gray70") +
+            color = "gray60") +
   labs(title = "Differences in average age of first substance use based on education level",
        x = "Average age of first use (in years)",
-       y = "") 
-
-#limit x axis
-# add labels for average age since limiting x axis
-#JP - change the color of the average age or to move it over slightly more to the right. I also wonder if changing your x-axis scale to 30 would make this a stronger plot. -JP
+       y = "",
+       caption = "Data from the CDC's National Health and Nutrition Examination Survey (2013-2015)") +
+  theme(plot.title = element_text(hjust = 1.5))
   
 ```
+
+> # added ncol = 1 to see more of variability 
+# geared more towards general audience, but since this is for academic can use distribution which I like better. 
+#limit x axis
+# add labels for average age since limiting x axis
+* think of other type of graph (have point estimate with st. error since calculating average)
+* add label for average age and nudge so you can see them
+* could try stat density
+* tried just point and uncertainty, but had to skew axis too much, liked having distribution of points showing extreme values and differences in number of people reporting (e.g., data points on jittered distribution)
+* force one column to easier to compare accross drugs and expand x axis that is years
+* added title and caption, labels since skewed axis
+PR - #I really like your use of the dark background and the blue band to display the error bars. I think choosing to turn your error bars into a band as opposed to the lines of error bars over jittered data points displays the patterns of your data clearer, so really good decision! 
+
 
 ### Fifth Revision
 
@@ -839,23 +847,12 @@ p  +
   scale_color_OkabeIto(darken = .2)
 ```
 
-
-
 > Specific changes and why
-
-```{r peer_review_p3}
-# Peer Review:
-# -	I think the version of this visual for the scientific community might be my favorite of your visuals!  I love the dark theme, and I think you have done a really great job of clearly and effectively displaying the information in a way that is also visually appealing.  My only suggestion would be to change the colors for the titles (drug type, cocaine, etc.) as they got lost (blended in) when you switched to the dark theme, but that is very minor. 
-#o	Suggested code (within the theme() argument): strip.text = element_text(colour = "gray80")
-
-
-#(1) Your title didn't print correctly for me (its cut-off on one side or the other, depending on if it was in the console or zoomed in). I changed the hjust to be one and decreased the font to 12.5, and then it worked for me (did this in the code above).
-#(2) I would also think about increased the size of the font within the plot, especially the mean years (or maybe just bolding them?). I felt I was straining my eyes a little to read them.
-
-#I really like your use of the dark background and the blue band to display the error bars. I think choosing to turn your error bars into a band as opposed to the lines of error bars over jittered data points displays the patterns of your data clearer, so really good decision! 
-
-# -	I also really like how you adapted this visual for the general public in a way that is much more approachable by removing the error bars, while still maintaining the same information.  That said, I kind of miss the colors for each education level!  I know it is double encoding, but I also think the visual is really appealing and sort of draws you in with the color coding by education level on a dark background (just something to consider). 
-
-
-```
+* back to original scale and distribution of points (see above comment)
+* change colors and theme layout
+  * darkened oke theme
+* changed title
+* added caption
+* double encoded with color
+ 
 

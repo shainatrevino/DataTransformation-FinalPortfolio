@@ -164,23 +164,21 @@ rpud1 <- pud %>%
 
 ```{r plot3_data}
 pd <- d %>% 
-  rename(age_Marijuana = duq210, 
-         age_Cocaine = duq260, 
+  rename(age_Cocaine = duq260, 
          age_Heroin = duq300, 
          age_Meth = duq340) %>% 
   filter(year != 2005) %>% 
-  select(age_Cocaine, age_Marijuana, age_Heroin, age_Meth, income, sex, ethnicity, sex) %>% 
+  select(age_Cocaine, age_Heroin, age_Meth, income, sex, ethnicity, sex, education) %>% 
   gather(drug, age_use, age_Cocaine:age_Meth) %>% 
   separate(drug, c(NA, "drug"), sep = "_") %>% 
   drop_na(age_use)
 
 pd1 <- d %>% 
-  rename(age_Marijuana = duq210, 
-         age_Cocaine = duq260, 
+  rename(age_Cocaine = duq260, 
          age_Heroin = duq300, 
          age_Meth = duq340) %>% 
   filter(year != 2005) %>% 
-  select(age_Cocaine, age_Marijuana, age_Heroin, age_Meth, income, sex, year, ethnicity, education) %>% 
+  select(age_Cocaine, age_Heroin, age_Meth, income, sex, year, ethnicity, education) %>% 
   gather(drug, age_use, age_Cocaine:age_Meth) %>% 
   separate(drug, c(NA, "drug"), sep = "_") %>% 
   mutate(income = case_when(income == "$0 - $4,999" ~ "Under $20,000", #grouped by 10s instead of 5s
@@ -222,8 +220,7 @@ pd1_rev <- pd1 %>%
                                      ethnicity == "Asian" ~ "Non- White",
                                      TRUE ~ NA_character_),
          drug = factor(drug,
-                       levels = c("Marijuana",
-                                  "Cocaine",
+                       levels = c("Cocaine",
                                   "Meth",
                                   "Heroin"))) %>% 
   drop_na(age_use, education)
@@ -245,7 +242,7 @@ pd1_rev_sum <- pd1_rev %>%
   filter(drug != "Marijuana")
 
 p <- ggplot(pd1_rev_sum, aes(education, avg_age)) + 
-  geom_jitter(aes(x = education, y = age_use, color = education), data = pd1_rev_filter, alpha = .1, width = .25) +
+  geom_jitter(aes(x = education, y = age_use, color = education), data = pd1_rev_filter, alpha = .15, width = .25) +
   geom_errorbar(aes(ymin = avg_age + qnorm(.025)*se,
                     ymax = avg_age + qnorm(.975)*se),
                 width = .4) +
@@ -705,13 +702,9 @@ ggplot(rpud1, aes(use_yr, year, fill = drug)) +
 Sidebar Title {.sidebar}
 ----------------------
 
-explanation of audience and aims
+This plot is geared towards an academic audience and aims to show differences in the age of first substance use by income for each illicit substance type. 
 
-main evolutions of plot 3.
-
-Audience: Scientific community
-Goal: Show how age of first substance use differs by income for each substance type
-Variables: age of first substance use is categorical, income and substance types are categorical
+For the final version of this plot, I made the following revisions:
 
 1
 * take out sex since there are barely any differences
@@ -736,52 +729,12 @@ Variables: age of first substance use is categorical, income and substance types
 * add label for average age
 * could try stat density
 
-Column {.tabset} {data-commentary-height=1200}
+Column {data-width=800}
 -----------------------------------------------------------------------
 
-### Chart 3a Title {data-icon="fa-calendar"} 
+### Final Revised Plot 3 
 
-```{r initial_p3}
-ggplot(pd, aes(income, age_use)) + 
-  geom_col(aes(fill = sex), position = "dodge") + #barely any sex differences
-  facet_wrap(~ drug)
-```
-
-> Specific changes and why
-
-
-### Chart 3b Title Tab
-
-```{r p3_bar}
-sum_pd1 <- pd1 %>% 
-  filter(income != "$75,000 and Over" |
-         income != "Over $20,000") %>% 
-  group_by(drug, income) %>% 
-  summarize(avg_age = mean(age_use),
-            n = length(age_use),
-            sd = sd(age_use),
-            se = sd / sqrt(n))
-
-
-ggplot(sum_pd1, aes(fct_reorder(drug, avg_age), avg_age)) + 
-  geom_col() +
-  facet_wrap(~ income)
-#can't really see differences - make jitter with point estimate and se bar
-#consider filtering for some years and taking out marijuana again
-```
-
-> Specific changes and why
-
-### TITLE tab
-
-```{r revised_white}
-p  +
-  scale_color_OkabeIto(darken = .2)
-```
-
-### TITLE 
-
-```{r revised_p3}
+```{r final_p3, fig.width=7}
 p + theme(plot.background = element_rect(fill = "gray10"),
         axis.text = element_text(colour = "gray80"),
         axis.title = element_text(colour = "gray80"),
@@ -798,17 +751,71 @@ p + theme(plot.background = element_rect(fill = "gray10"),
   geom_point(size = 1, color = "gray90")
 ```
 
+Column {.tabset data-commentary-height=1200}
+-----------------------------------------------------------------------
 
-### Chart 3c Title Tab
+### Initial Plot 
+
+```{r initial_p3}
+ggplot(pd, aes(income, age_use)) + 
+  geom_col(aes(fill = sex), position = "dodge") + #barely any sex differences
+  facet_wrap(~ drug)
+```
+
+> The initial plot above to show differences in age of drug use by income levels and sex is not interpretable becuase of the number of income categories that are in the dataset. Further, there doesn't seem to be many observable differences for how many different categories there are. This may be due to the scale that the original researcher used. The second major problem in this plot is that it is not plotting age of use on y axis as expected, but a sum of age of use for each income group. 
+
+
+### First Revision
+
+```{r p3_bar}
+sum_pd1 <- pd1 %>% 
+  group_by(drug, education, sex) %>% 
+  summarize(avg_age = mean(age_use),
+            n = length(age_use),
+            sd = sd(age_use),
+            se = sd / sqrt(n))
+
+
+ggplot(sum_pd1, aes(fct_reorder(drug, avg_age), avg_age)) + 
+  geom_col(aes(fill = sex), position = "dodge") +
+  facet_wrap(~ education)
+#can't really see differences - make jitter with point estimate and se bar
+#consider filtering for some years and taking out marijuana again
+```
+
+> In the first revision of this plot, I substituted education groups as a proxy for education levels, since there are less inherent categories. Also, I summarized and plotted a mean age of first use by substance type, income, and sex instead of the previous count. As you can see, there are not many observable differences related to sex. So, to reduce grouping variables and make the plot more succinct, I will take out sex from these data in the next rendition. Although this plot does show differences in average age of use, it doesn't show any uncertainty around the estimate or the actual distribution of the data that would be interpretable and helpful for an academic audience. 
+
+### Third Revision
+
+```{r revise3_p3}
+ggplot(pd1_rev_sum, aes(education, avg_age)) + 
+  geom_jitter(aes(x = education, y = age_use), data = pd1_rev_filter, alpha = .15, width = .25, color = "maroon") +
+  geom_errorbar(aes(ymin = avg_age + qnorm(.025)*se,
+                    ymax = avg_age + qnorm(.975)*se),
+                width = .4) +
+  geom_point(size = 1) + # add jitter from other dataset (before point)
+  facet_wrap(~ drug) + # added ncol = 1 to see more of variability 
+  coord_flip() + #coord flip to see labels better and differences in outcome
+  labs(y = "Age of first use (in years)",
+       x = "",
+       title = "Age of First Substance Use by Education Level",
+       subtitle = "Distribution and point estimate for average age of first use",
+       caption = "Data from the CDC's National Health and Nutrition Examination Survey (2013-2015)")
+```
+
+> releveled education categories
+jitter with point estimate using different datasets
+
+### Fourth Revision
 
 ```{r density}
 #more general audience?
 ggplot(pd1_rev_sum, aes(avg_age, education)) + 
   stat_confidence_density(aes(moe = se),
-                          fill = "cornflowerblue",
+                          fill = "maroon",
                           height = .45) +
   xlim(15, 35) +
-  geom_point(alpha = .8, size = 1.25) +
+  geom_point(alpha = .8, size = 1) +
   facet_wrap(~drug, ncol = 1) +
   geom_text(aes(avg_age, education, label = round(avg_age, 1)),
             nudge_x = 1.5,
@@ -817,21 +824,22 @@ ggplot(pd1_rev_sum, aes(avg_age, education)) +
             color = "gray70") +
   labs(title = "Differences in average age of first substance use based on education level",
        x = "Average age of first use (in years)",
-       y = "") +
-  theme(plot.background = element_rect(fill = "gray10"),
-        axis.text = element_text(colour = "gray80"),
-        axis.title = element_text(colour = "gray80"),
-        plot.title = element_text(colour = "gray80", hjust = 1, size = 12.5),
-        plot.caption = element_text(colour = "gray80", vjust = 1),
-        panel.grid.major = element_line(colour = "gray30"), 
-        panel.grid.minor = element_line(colour = "gray30"),
-        strip.text = element_text(color = "gray80"))
+       y = "") 
 
 #limit x axis
 # add labels for average age since limiting x axis
 #JP - change the color of the average age or to move it over slightly more to the right. I also wonder if changing your x-axis scale to 30 would make this a stronger plot. -JP
   
 ```
+
+### Fifth Revision
+
+```{r revised_white}
+p  +
+  scale_color_OkabeIto(darken = .2)
+```
+
+
 
 > Specific changes and why
 

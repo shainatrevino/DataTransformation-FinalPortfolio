@@ -2,6 +2,7 @@
 title: "Data Visualization Portfolio"
 output: 
   flexdashboard::flex_dashboard:
+    css: style.css
     orientation: columns
     vertical_layout: fill
 ---
@@ -13,7 +14,6 @@ library(tidyverse)
 library(here)
 library(rio)
 library(colorblindr)
-library(ggridges)
 library(ggridges)
 library(ungeviz)
 theme_set(theme_minimal())
@@ -272,7 +272,7 @@ These data and codebooks are available online [here](https://www.cdc.gov/nchs/nh
 
 NHANES surveys around 5,000 participants accross the U.S. each year. Surveys include demographic, socioeconomic, dietary, and health related questions, as well as medical records, physiological assessments, and laboratory test. 
 
-The data presented in this portfolio came from three questionnaires: 
+The data presented in this portfolio come from three questionnaires: 
 
 * Demographics 
 
@@ -287,10 +287,10 @@ The final visualizations are presented on the right.
 For more information about the evolution of each plot (i.e., how it changed over time) see individual tabs on top of this dashboard.
 
 
-Column {data-width=550 data-commentary-height=300}
+Column {data-width=550}
 -----------------------------------------------------------------------
 
-### Data Visualization #1: Illicit substance use trends by substance type, gender and major policy decisions in NHANES sample 
+### Data Visualization #1: Illicit substance use trends by substance type, gender and major policy decisions in NHANES sample  
 
 ```{r final_plot1, fig.width=8}
 ggplot(rpd, aes(year, n, color = drug)) + 
@@ -462,7 +462,7 @@ ggplot(rpd, aes(year, n, color = drug)) +
 
 > This plot shows use of different illicit substances from 2005 to 2015 by gender. Most notably, males have a higher reported use of substances, especially cocaine. It is interesting to note that reported cocaine use declined after the end of the cultural 'War on Drugs' for both males and females, and heroin use declined for males. Also, after marijanua was legalized you can see a reduction in illicit drug use for both sexes, except for cocaine use in males. 
 
-Column {.tabset data-commentary-height=1200}
+Column {.tabset}
 -----------------------------------------------------------------------
 
 ### Initial Plot 
@@ -706,17 +706,13 @@ This plot is geared towards an academic audience and aims to show differences in
 
 For the final version of this plot, I made the following revisions:
 
-* Dark theme
+* Created my own customized dark theme to have a black background and light grey text/gridlines to better see clusters of overlap among the jittered point distribution
 
-* Change color of error bars and point
+* Changed the color of the error bars and point estimates to white so they stand out in the dark theme
 
-* Back to default colors for point estimate
+* Reverted back to the default colors for the groups becuase they are brighter and easier to see against the black background
 
-Peer Review:
-I think the version of this visual for the scientific community might be my favorite of your visuals!  I love the dark theme, and I think you have done a really great job of clearly and effectively displaying the information in a way that is also visually appealing.  My only suggestion would be to change the colors for the titles (drug type, cocaine, etc.) as they got lost (blended in) when you switched to the dark theme, but that is very minor. 
-I know it is double encoding, but I also think the visual is really appealing and sort of draws you in with the color coding by education level on a dark background (just something to consider). 
-
-
+This final visualization is my favorite to look at and was my favorite to work on. There were so many options available for plotting the differences I was interested in. I think that the addition of the dark theme and bright points does a great job and clearly and accurately displaying all the information that I wanted to get accross and it is visually appealing. This was also my first time using two data frames in the same plot - which was a major challenge and eventual victory!
 
 
 Column {data-width=800}
@@ -740,6 +736,8 @@ p + theme(plot.background = element_rect(fill = "gray10"),
                 color = "gray90") +
   geom_point(size = 1, color = "gray90")
 ```
+
+> This plot shows differences in the distribution and mean age of first illicit substance use accross various education levels using data from the 2013-2015 NHANES samples. There are no observable significant differences in mean age of first use accross education levels. Although it is interesting to note that those with no high school degree reported using substances at slightly older age than those with a college degree. The most obvious observation is that more people reported using cocaine compared to both meth and heroin. However, there seems to be more variability in age of first heroin use as seen by the distribution of data points, although there were much less participants reporting any heroin use. 
 
 Column {.tabset data-commentary-height=1200}
 -----------------------------------------------------------------------
@@ -772,7 +770,7 @@ ggplot(sum_pd1, aes(fct_reorder(drug, avg_age), avg_age)) +
 
 ```
 
-> In the first revision of this plot, I substituted education groups as a proxy for education levels, since there are less inherent categories. Also, I summarized and plotted a mean age of first use by substance type, income, and sex instead of the previous count. As you can see, there are not many observable differences related to sex. So, to reduce grouping variables and make the plot more succinct, I will take out sex from these data in the next rendition. Although this plot does show differences in average age of use, it doesn't show any uncertainty around the estimate or the actual distribution of the data that would be interpretable and helpful for an academic audience. 
+> In the first revision of this plot, I substituted education groups for income levels, since there are less inherent categories and the two are similar contructs of socioeconomic status. Also, I summarized and plotted a mean age of first use by substance type, income, and sex instead of the previous count. As you can see, there are not many observable differences related to sex. So, to reduce grouping variables and make the plot more succinct, I will take out sex from these data in the next rendition. Although this plot does show differences in average age of use, it doesn't show any uncertainty around the estimate or the actual distribution of the data that would be interpretable and helpful for an academic audience. 
 
 ### Third Revision
 
@@ -787,22 +785,7 @@ ggplot(pd1_rev_sum, aes(education, avg_age)) +
   coord_flip() 
 ```
 
-> releveled education categories
-jitter with point estimate using different datasets
-#can't really see differences in previous plot - make jitter with point estimate and se bar
-# add jitter from other dataset (before point)
-#coord flip to see labels better and differences in outcome
-* take out sex since there are barely any differences
-* create one average value to plot instead of distribution
-  * calculate mean to plot instead of whatever is plotted above
-  * make error bars for uncertainty
-  * calculate se for mean of age of use
-* have  education level on x axis and facet by drug to more clearly see differences in education level for each drug.
-* coord flip?
-* fct_reorder levels of education manually according to progression
-* filter out NAs
-* plot jittered raw distribution with point and uncertaintly over it
-* decresed alpha a lot because of overplotting
+> The major revision that is apparent in the plot above is substituting a mean point estimate and error bars  instead of the columns on the previous plot. This results in a more accurate depiction of the estimate and underlying distribution. The plot is further enhanced by using the raw dataset to show the jittered distribution of each participant response to futher clarify the underlying distribution and make it possible to identify extreme cases. Additionally, I changed the facet to substance type flipped the x and y axis so that it is easier to make comparisons and see differences between the income levels for each substance. Other minor revision included: manually releveling the education categories to align with the progression through education, filtering out the missing response category for income, and decreasing transparency of underlying jittered points to see areas of high overlap.
 
 ### Fourth Revision
 
@@ -823,21 +806,11 @@ ggplot(pd1_rev_sum, aes(avg_age, education)) +
        x = "Average age of first use (in years)",
        y = "",
        caption = "Data from the CDC's National Health and Nutrition Examination Survey (2013-2015)") +
-  theme(plot.title = element_text(hjust = 1.5))
+  theme(plot.title = element_text(hjust = 1))
   
 ```
 
-> # added ncol = 1 to see more of variability 
-# geared more towards general audience, but since this is for academic can use distribution which I like better. 
-#limit x axis
-# add labels for average age since limiting x axis
-* think of other type of graph (have point estimate with st. error since calculating average)
-* add label for average age and nudge so you can see them
-* could try stat density
-* tried just point and uncertainty, but had to skew axis too much, liked having distribution of points showing extreme values and differences in number of people reporting (e.g., data points on jittered distribution)
-* force one column to easier to compare accross drugs and expand x axis that is years
-* added title and caption, labels since skewed axis
-PR - #I really like your use of the dark background and the blue band to display the error bars. I think choosing to turn your error bars into a band as opposed to the lines of error bars over jittered data points displays the patterns of your data clearer, so really good decision! 
+> In this plot I was attempting to show most of the same information as in the previous plot, but without so much information in the plotting area. I decided to try showing the uncertainty around the point estimate with the `ungeviz` package. The first time I tried this, it was very difficult to see the uncertainty, especially for cocaine, because the x axis was still on the original scale (from 10 - 50 years), so I had to limit the scale to a shorter age range. This skewed the scale of the differences in the data, so I decided to add labels for the point estimates and nudge them so the viewer can tell exactly how many years each group differs by. Another major revision here is the decision to force the facets into one column so that it is easier to make comparisons accross substance types.  I also added a title and caption to this plot. I do appreciate how much cleaner this plot is compared to the previous (as noted by my peer reviewers), but I prefer being able to see the raw distribution and extreme values as well as differences in the number of people reporting at all (e.g., number of jittered points). Since this plot is aimed at an academic audience, I believe that including these components is appropriate and more accurately describes the data.
 
 
 ### Fifth Revision
@@ -847,12 +820,6 @@ p  +
   scale_color_OkabeIto(darken = .2)
 ```
 
-> Specific changes and why
-* back to original scale and distribution of points (see above comment)
-* change colors and theme layout
-  * darkened oke theme
-* changed title
-* added caption
-* double encoded with color
- 
+> For this revision above, I kept the facet as substance type and forced in one column from the previous plot, but changed the plot data back to the original axis scale, distribution, and point estimate to more accurately portray the data. I also decided to use color to double encode the categories on the y axis. This minor change really makes it easier to compare accross groups and substances and reduces cognitive load. I choose a colorblind friendly pallete, but had to darken the OkabeIto pallete because the yellow was hard to see. I also clarified the title and added a subtitle to explain this plot since it is a little more complex than the previous. 
+
 
